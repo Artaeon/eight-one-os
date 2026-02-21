@@ -1,0 +1,97 @@
+{
+    "layer": "top",
+    "position": "top",
+    "height": 36,
+    "margin-top": 6,
+    "margin-left": 10,
+    "margin-right": 10,
+    "spacing": 0,
+
+    "modules-left": ["hyprland/workspaces", "hyprland/window"],
+    "modules-center": ["clock"],
+    "modules-right": ["custom/sabbath", "pulseaudio", "network", "cpu", "memory", "disk", "battery", "tray"],
+
+    "hyprland/workspaces": {
+        "format": "{icon}",
+        "format-icons": {
+            "1": "󰲡",
+            "2": "󰲣",
+            "3": "󰲥",
+            "4": "󰲧",
+            "5": "󰲩",
+            "active": "󰮯",
+            "default": "󰊠"
+        },
+        "on-scroll-up": "hyprctl dispatch workspace e+1",
+        "on-scroll-down": "hyprctl dispatch workspace e-1"
+    },
+
+    "hyprland/window": {
+        "format": "{}",
+        "max-length": 50,
+        "rewrite": {
+            "(.*) — Alacritty": "  $1",
+            "(.*) — Neovim": "  $1"
+        }
+    },
+
+    "clock": {
+        "format": "  {:%H:%M}",
+        "format-alt": "  {:%A, %B %d, %Y}",
+        "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>",
+        "interval": 1
+    },
+
+    "custom/sabbath": {
+        "exec": "/usr/local/bin/holy-sabbath",
+        "return-type": "json",
+        "interval": 3600,
+        "format": "🕊️ {}"
+    },
+
+    "cpu": {
+        "format": "  {usage}%",
+        "tooltip": true,
+        "interval": 2
+    },
+
+    "memory": {
+        "format": "  {percentage}%",
+        "tooltip-format": "{used:0.1f}G / {total:0.1f}G used",
+        "interval": 2
+    },
+
+    "disk": {
+        "format": "󰋊 {percentage_used}%",
+        "path": "/",
+        "interval": 30
+    },
+
+    "pulseaudio": {
+        "format": "{icon} {volume}%",
+        "format-muted": "󰖁 Muted",
+        "format-icons": {
+            "default": ["󰕿", "󰖀", "󰕾"]
+        },
+        "on-click": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
+    },
+
+    "network": {
+        "format-wifi": "󰤨 {essid}",
+        "format-ethernet": "󰈀 {ipaddr}",
+        "format-linked": "󰈀 {ifname}",
+        "format-disconnected": "󰤭 Offline",
+        "tooltip-format": "{ifname}: {ipaddr}/{cidr}\n⬆️ {bandwidthUpBytes} ⬇️ {bandwidthDownBytes}"
+    },
+
+    "battery": {
+        "format": "{icon} {capacity}%",
+        "format-icons": ["󰂎", "󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"],
+        "format-charging": "󰂄 {capacity}%"
+    },
+
+    "tray": {
+        "icon-size": 16,
+        "spacing": 8
+    }
+}

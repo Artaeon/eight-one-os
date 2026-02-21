@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+export WLR_NO_HARDWARE_CURSORS=1
+export LIBGL_ALWAYS_SOFTWARE=1
+export WLR_RENDERER_ALLOW_SOFTWARE=1
+export HYPRLAND_NO_HARDWARE_CURSORS=1
+export XDG_SESSION_TYPE=wayland
+export XDG_CURRENT_DESKTOP=Hyprland
+exec Hyprland

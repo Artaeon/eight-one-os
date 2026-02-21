@@ -1,0 +1,21 @@
+[general]
+import = ["~/.config/alacritty/theme.toml"]
+
+[font]
+normal = { family = "JetBrainsMono Nerd Font", style = "Regular" }
+bold = { family = "JetBrainsMono Nerd Font", style = "Bold" }
+italic = { family = "JetBrainsMono Nerd Font", style = "Italic" }
+size = 13.0
+
+[window]
+padding = { x = 12, y = 12 }
+opacity = 0.92
+blur = true
+decorations = "None"
+
+[cursor]
+style = { shape = "Beam", blinking = "On" }
+vi_mode_style = { shape = "Block" }
+
+[scrolling]
+history = 10000

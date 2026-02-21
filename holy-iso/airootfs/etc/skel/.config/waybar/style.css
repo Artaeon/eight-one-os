@@ -1,0 +1,150 @@
+/* EIGHT.ONE OS — Premium Waybar Theme */
+/* Glassmorphism Dark with Gold Accents */
+
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap");
+
+* {
+    border: none;
+    border-radius: 0;
+    font-family: "JetBrainsMono Nerd Font", "JetBrains Mono", monospace;
+    font-size: 13px;
+    min-height: 0;
+    transition: all 0.3s ease;
+}
+
+window#waybar {
+    background: rgba(10, 10, 15, 0.75);
+    border-radius: 12px;
+    border: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+tooltip {
+    background: rgba(10, 10, 15, 0.9);
+    border: 1px solid rgba(212, 175, 55, 0.4);
+    border-radius: 8px;
+    color: #e8e6df;
+}
+
+/* === Left Modules === */
+
+#workspaces {
+    margin: 4px 6px;
+}
+
+#workspaces button {
+    padding: 2px 8px;
+    margin: 2px 2px;
+    color: #595959;
+    border-radius: 8px;
+    background: transparent;
+}
+
+#workspaces button.active {
+    color: #d4af37;
+    background: rgba(212, 175, 55, 0.15);
+    font-weight: bold;
+    border: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+#workspaces button:hover {
+    color: #f0d78c;
+    background: rgba(212, 175, 55, 0.1);
+}
+
+#window {
+    color: #8a8a8a;
+    padding: 0 12px;
+    font-style: italic;
+}
+
+/* === Center (Clock) === */
+
+#clock {
+    color: #e8e6df;
+    font-weight: bold;
+    padding: 0 16px;
+    background: rgba(212, 175, 55, 0.08);
+    border-radius: 20px;
+    margin: 4px 0;
+    border: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+/* === Right Modules === */
+
+#custom-sabbath {
+    color: #d4af37;
+    font-weight: bold;
+    padding: 0 12px;
+}
+
+#cpu,
+#memory,
+#disk {
+    color: #1abc9c;
+    padding: 0 8px;
+    margin: 4px 2px;
+    border-radius: 12px;
+    background: rgba(26, 188, 156, 0.08);
+}
+
+#cpu:hover,
+#memory:hover,
+#disk:hover {
+    background: rgba(26, 188, 156, 0.15);
+}
+
+#pulseaudio {
+    color: #9b59b6;
+    padding: 0 10px;
+    margin: 4px 2px;
+    border-radius: 12px;
+    background: rgba(155, 89, 182, 0.08);
+}
+
+#pulseaudio.muted {
+    color: #595959;
+    background: transparent;
+}
+
+#network {
+    color: #3498db;
+    padding: 0 10px;
+    margin: 4px 2px;
+    border-radius: 12px;
+    background: rgba(52, 152, 219, 0.08);
+}
+
+#network.disconnected {
+    color: #e74c3c;
+    background: rgba(231, 76, 60, 0.08);
+}
+
+#battery {
+    color: #2ecc71;
+    padding: 0 10px;
+    margin: 4px 2px;
+    border-radius: 12px;
+    background: rgba(46, 204, 113, 0.08);
+}
+
+#battery.warning {
+    color: #f39c12;
+    background: rgba(243, 156, 18, 0.1);
+}
+
+#battery.critical {
+    color: #e74c3c;
+    background: rgba(231, 76, 60, 0.1);
+    animation: blink 1s infinite;
+}
+
+#tray {
+    padding: 0 8px;
+    margin: 4px 4px;
+}
+
+@keyframes blink {
+    50% {
+        opacity: 0.5;
+    }
+}

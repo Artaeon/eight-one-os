@@ -1,0 +1,16 @@
+#!/bin/bash
+BIBLE_FILE="$HOME/.local/share/holy-bible/kjv.txt"
+mkdir -p "$(dirname "$BIBLE_FILE")"
+
+if [ ! -f "$BIBLE_FILE" ]; then
+    echo "=> Downloading the Holy Bible (KJV)..."
+    curl -s -L "https://raw.githubusercontent.com/mxw/grmr/master/src/finaltests/bible.txt" > "$BIBLE_FILE"
+fi
+
+cat "$BIBLE_FILE" | fzf \
+    --prompt="📖 Scripture Search: " \
+    --layout=reverse \
+    --border="rounded" \
+    --color="border:#d4af37,prompt:#d4af37,pointer:#d4af37,hl:#d4af37,hl+:#d4af37" \
+    --preview="echo {} | fold -s -w $(tput cols)" \
+    --preview-window=up:wrap

@@ -1,0 +1,22 @@
+# EIGHT.ONE OS — Mako Notification Daemon Config
+
+sort=-time
+layer=overlay
+anchor=top-right
+width=350
+height=120
+margin=10,10,0,0
+padding=15
+border-size=2
+border-radius=10
+border-color=#d4af37
+background-color=#0a0a0fdd
+text-color=#e8e6df
+default-timeout=5000
+font=JetBrainsMono Nerd Font 11
+max-visible=4
+icon-path=/usr/share/icons/Adwaita
+
+[urgency=high]
+border-color=#e74c3c
+default-timeout=10000

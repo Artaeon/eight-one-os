@@ -1,0 +1,19 @@
+#!/bin/bash
+echo "=> Starting Holy AI Assistant (Powered by Llama3)..."
+
+# Ensure ollama is running or try starting it
+if ! systemctl is-active --quiet ollama; then
+    echo "Ollama service is not running. Starting it now..."
+    sudo systemctl start ollama || { echo "Failed to start Ollama. Are you rooted?"; exit 1; }
+fi
+
+MODEL="llama3.2:1b" # Use a small model for local fast execution
+
+# Check if model exists
+if ! ollama list | grep -q "$MODEL"; then
+    echo "=> Model '$MODEL' not found locally. Initializing download... This may take a minute."
+    ollama pull "$MODEL"
+fi
+
+echo "=> AI Ready. State your question."
+ollama run "$MODEL"

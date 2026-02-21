@@ -1,0 +1,64 @@
+#!/bin/bash
+
+# holy-focus script
+# Block distracting websites by appending them to /etc/hosts temporarily.
+
+HOSTS_FILE="/etc/hosts"
+BACKUP_HOSTS="/etc/hosts.holy.bak"
+BLOCK_DURATION_MINS=120
+
+DISTRACTIONS=(
+    "reddit.com" "www.reddit.com"
+    "twitter.com" "www.twitter.com" "x.com" "www.x.com"
+    "youtube.com" "www.youtube.com"
+    "news.ycombinator.com"
+    "facebook.com" "www.facebook.com"
+    "instagram.com" "www.instagram.com"
+)
+
+if [ "$EUID" -ne 0 ]; then
+    echo "🙏 Monastic mode requires elevation (sudo) to block sites."
+    exec sudo "$0" "$@"
+fi
+
+if [ "$1" == "stop" ]; then
+    if [ -f "$BACKUP_HOSTS" ]; then
+        mv "$BACKUP_HOSTS" "$HOSTS_FILE"
+        echo "🕊️  Monastic mode ended early. Distractions unblocked."
+    else
+        echo "You are not currently in Monastic mode."
+    fi
+    exit 0
+fi
+
+if [ -f "$BACKUP_HOSTS" ]; then
+    echo "You are already in deeply focused Monastic Mode."
+    exit 1
+fi
+
+echo "🛡️ Entering Monastic Mode for $BLOCK_DURATION_MINS minutes. Deep focus activated."
+
+# Backup
+cp "$HOSTS_FILE" "$BACKUP_HOSTS"
+
+{
+    echo ""
+    echo "# === HOLY FOCUS BLOCKLIST ==="
+} >> "$HOSTS_FILE"
+
+for site in "${DISTRACTIONS[@]}"; do
+    echo "127.0.0.1 $site" >> "$HOSTS_FILE"
+    echo "::1       $site" >> "$HOSTS_FILE"
+done
+
+echo "Temptations blocked. Enjoy your Vibe Coding."
+
+# Schedule unblock in background
+(
+    sleep $((BLOCK_DURATION_MINS * 60))
+    if [ -f "$BACKUP_HOSTS" ]; then
+        mv "$BACKUP_HOSTS" "$HOSTS_FILE"
+        sudo -u "$(logname)" notify-send "🕊️ Monastic Mode Complete" "You have conquered the flesh. Take a rest."
+    fi
+) &
+disown

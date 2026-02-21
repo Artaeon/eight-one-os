@@ -1,0 +1,39 @@
+#!/bin/bash
+
+echo "🎶 Invoking Holy Vibes..."
+
+# Check if mpv is installed
+if ! command -v mpv &> /dev/null; then
+    echo "Error: mpv is not installed."
+    exit 1
+fi
+
+# Options: 1=Gregorian Chants, 2=Worship Lofi, 3=Deep Focus Lofi
+echo "Select your auditory environment:"
+echo "1) 🕊️ Gregorian Chants (Monastic Ambient)"
+echo "2) 🙏 Christian Lofi Worship"
+echo "3) 🎧 Deep Focus Synthwave / Lofi"
+read -p "Your choice (1/2/3): " choice
+
+url=""
+case $choice in
+    1)
+        url="https://www.youtube.com/watch?v=S2fF_T3fN48" # Replace with actual 24/7 chant stream if available, or just a very long video
+        ;;
+    2)
+        url="https://www.youtube.com/watch?v=R2m0yLwM1Lg" # Lofi Worship Mix
+        ;;
+    3)
+        url="https://www.youtube.com/watch?v=jfKfPfyJRdk" # Lofi Girl Radio
+        ;;
+    *)
+        echo "Invalid choice. Defaulting to Deep Focus Lofi."
+        url="https://www.youtube.com/watch?v=jfKfPfyJRdk"
+        ;;
+esac
+
+echo "=> Playing audio in the background (press 'q' inside terminal if not in background, otherwise use 'killall mpv' to stop)."
+mpv --no-video "$url" &
+disown
+
+echo "Vibes activated. Go code in peace."

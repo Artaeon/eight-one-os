@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# Simple script to check if it's Sunday (Day 0) and send a desktop notification
+
+DAY_OF_WEEK=$(date +%w)
+HOUR=$(date +%H)
+
+# If it's Sunday, or Saturday after 6 PM, remind them.
+if [ "$DAY_OF_WEEK" -eq 0 ] || ( [ "$DAY_OF_WEEK" -eq 6 ] && [ "$HOUR" -ge 18 ] ); then
+    echo "{"
+    echo "\"text\": \"Sabbath\", \"tooltip\": \"Remember the Sabbath day, to keep it holy. Have you rested?\""
+    echo "}"
+    
+    # Randomly pop up a notification sometimes. Wait 5 minutes to stagger it.
+    if [ $((RANDOM % 5)) -eq 0 ]; then
+        notify-send "Sabbath Reminder" "Take a break, rest your mind and body. The code will be here tomorrow. 🙏"
+    fi
+else
+    echo "{"
+    echo "\"text\": \"Code\", \"tooltip\": \"Work hard, vibe hard.\""
+    echo "}"
+fi
