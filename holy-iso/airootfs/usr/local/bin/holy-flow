@@ -1,0 +1,271 @@
+#!/usr/bin/env bash
+# EIGHT.ONE OS — Holy Flow
+# Pomodoro-style deep work timer with Waybar integration & streak tracking
+# Usage: holy-flow [start|stop|status|waybar]
+
+GOLD="#d4af37"
+CYAN="#45b7d1"
+RED="#ff6b6b"
+GREEN="#00ff88"
+
+FLOW_DIR="$HOME/.local/share/holy-flow"
+FLOW_PID="$FLOW_DIR/flow.pid"
+FLOW_STATE="$FLOW_DIR/state"
+FLOW_LOG="$HOME/Vault/flow-log.md"
+FLOW_STREAK="$FLOW_DIR/streak"
+INTENT_FILE="$HOME/.local/share/holy-flow/intent"
+
+WORK_MINUTES=50
+BREAK_MINUTES=10
+
+mkdir -p "$FLOW_DIR"
+mkdir -p "$(dirname "$FLOW_LOG")"
+
+# --- Helpers ---
+
+get_today() { date +%Y-%m-%d; }
+
+get_streak() {
+    [ -f "$FLOW_STREAK" ] && cat "$FLOW_STREAK" || echo "0"
+}
+
+increment_streak() {
+    local current
+    current=$(get_streak)
+    echo $((current + 1)) > "$FLOW_STREAK"
+}
+
+log_session() {
+    local duration="$1"
+    local today
+    today=$(get_today)
+    local intent=""
+    [ -f "$INTENT_FILE" ] && intent=$(cat "$INTENT_FILE")
+
+    # Create file with header if it doesn't exist
+    if [ ! -f "$FLOW_LOG" ]; then
+        echo "# 🔥 Flow Log" > "$FLOW_LOG"
+        echo "" >> "$FLOW_LOG"
+    fi
+
+    # Add date header if new day
+    if ! grep -q "## $today" "$FLOW_LOG" 2>/dev/null; then
+        echo "" >> "$FLOW_LOG"
+        echo "## $today" >> "$FLOW_LOG"
+        echo "" >> "$FLOW_LOG"
+    fi
+
+    local time_now
+    time_now=$(date +%H:%M)
+    echo "- **$time_now** — ${duration}min session ✅ ${intent:+| 🎯 $intent}" >> "$FLOW_LOG"
+}
+
+get_total_today() {
+    local today
+    today=$(get_today)
+    if [ -f "$FLOW_LOG" ]; then
+        # Count completed sessions today
+        local count
+        count=$(grep -A 100 "## $today" "$FLOW_LOG" 2>/dev/null | grep -c "session ✅" || echo "0")
+        echo "$count"
+    else
+        echo "0"
+    fi
+}
+
+# --- Timer Engine ---
+
+run_timer() {
+    local minutes=$1
+    local total_seconds=$((minutes * 60))
+    local elapsed=0
+
+    echo "WORK $total_seconds $elapsed" > "$FLOW_STATE"
+
+    while [ $elapsed -lt $total_seconds ]; do
+        # Check if we should stop
+        [ ! -f "$FLOW_PID" ] && exit 0
+
+        sleep 1
+        elapsed=$((elapsed + 1))
+        echo "WORK $total_seconds $elapsed" > "$FLOW_STATE"
+    done
+
+    # Session complete!
+    log_session "$minutes"
+    increment_streak
+
+    # Notify
+    notify-send -u normal -t 10000 "🔥 Flow Session Complete!" "You just built for ${minutes} minutes. Take a ${BREAK_MINUTES}min break." 2>/dev/null
+
+    # Break timer
+    elapsed=0
+    local break_seconds=$((BREAK_MINUTES * 60))
+    while [ $elapsed -lt $break_seconds ]; do
+        [ ! -f "$FLOW_PID" ] && exit 0
+        sleep 1
+        elapsed=$((elapsed + 1))
+        echo "BREAK $break_seconds $elapsed" > "$FLOW_STATE"
+    done
+
+    notify-send -u critical -t 10000 "🏗️ Break Over!" "Time to build again. Start another flow session." 2>/dev/null
+    echo "IDLE 0 0" > "$FLOW_STATE"
+
+    rm -f "$FLOW_PID"
+}
+
+# --- Commands ---
+
+cmd_start() {
+    if [ -f "$FLOW_PID" ] && kill -0 "$(cat "$FLOW_PID")" 2>/dev/null; then
+        echo "Flow session already running!"
+        return 1
+    fi
+
+    # Start timer in background
+    run_timer "$WORK_MINUTES" &
+    echo $! > "$FLOW_PID"
+
+    echo -e "\n${GOLD}🔥 Flow session started! ${WORK_MINUTES} minutes of deep work.${RESET}"
+    echo -e "Run ${CYAN}holy-flow stop${RESET} to end early.\n"
+}
+
+cmd_stop() {
+    if [ -f "$FLOW_PID" ]; then
+        local pid
+        pid=$(cat "$FLOW_PID")
+        kill "$pid" 2>/dev/null
+        rm -f "$FLOW_PID"
+        echo "IDLE 0 0" > "$FLOW_STATE"
+        echo -e "${CYAN}Flow session stopped.${RESET}"
+    else
+        echo "No active flow session."
+    fi
+}
+
+cmd_status() {
+    if [ ! -f "$FLOW_STATE" ]; then
+        echo "IDLE"
+        return
+    fi
+
+    read -r mode total elapsed < "$FLOW_STATE"
+    local remaining=$(( (total - elapsed) / 60 ))
+    local remaining_secs=$(( (total - elapsed) % 60 ))
+    local streak
+    streak=$(get_streak)
+    local today_count
+    today_count=$(get_total_today)
+
+    if [ "$mode" = "WORK" ]; then
+        printf "🔥 BUILDING | %02d:%02d remaining | Streak: %s | Today: %s sessions\n" \
+            "$remaining" "$remaining_secs" "$streak" "$today_count"
+    elif [ "$mode" = "BREAK" ]; then
+        printf "☕ BREAK | %02d:%02d remaining | Streak: %s\n" \
+            "$remaining" "$remaining_secs" "$streak"
+    else
+        printf "💤 IDLE | Streak: %s | Today: %s sessions\n" "$streak" "$today_count"
+    fi
+}
+
+cmd_waybar() {
+    # Output JSON for Waybar custom module
+    if [ ! -f "$FLOW_STATE" ]; then
+        echo '{"text": "💤", "tooltip": "holy-flow: No session", "class": "idle"}'
+        return
+    fi
+
+    read -r mode total elapsed < "$FLOW_STATE"
+    local remaining=$(( (total - elapsed) / 60 ))
+    local remaining_secs=$(( (total - elapsed) % 60 ))
+    local streak
+    streak=$(get_streak)
+    local today_count
+    today_count=$(get_total_today)
+
+    if [ "$mode" = "WORK" ]; then
+        printf '{"text": "🔥 %s | %02d:%02d", "tooltip": "Deep Work — %02d:%02d remaining\\nStreak: %s sessions\\nToday: %s completed", "class": "working"}\n' \
+            "$streak" "$remaining" "$remaining_secs" "$remaining" "$remaining_secs" "$streak" "$today_count"
+    elif [ "$mode" = "BREAK" ]; then
+        printf '{"text": "☕ %02d:%02d", "tooltip": "Break Time — %02d:%02d remaining", "class": "break"}\n' \
+            "$remaining" "$remaining_secs" "$remaining" "$remaining_secs"
+    else
+        if [ "$today_count" -gt 0 ]; then
+            printf '{"text": "🏗️ %s", "tooltip": "Ready to build\\n%s sessions today\\nStreak: %s", "class": "idle"}\n' \
+                "$today_count" "$today_count" "$streak"
+        else
+            printf '{"text": "🏗️", "tooltip": "Start building! Run holy-flow", "class": "idle"}\n'
+        fi
+    fi
+}
+
+cmd_tui() {
+    clear
+    echo -e "\e[33m\e[1m"
+    figlet -f small "Holy Flow" 2>/dev/null || echo "═══ HOLY FLOW ═══"
+    echo -e "\e[0m"
+
+    cmd_status
+    echo ""
+
+    local is_running=false
+    if [ -f "$FLOW_PID" ] && kill -0 "$(cat "$FLOW_PID")" 2>/dev/null; then
+        is_running=true
+    fi
+
+    if [ "$is_running" = true ]; then
+        CHOICE=$(gum choose \
+            "⏹️  Stop Flow Session" \
+            "📊 View Today's Log" \
+            "← Back")
+    else
+        CHOICE=$(gum choose \
+            "🔥 Start ${WORK_MINUTES}min Flow Session" \
+            "📊 View Today's Log" \
+            "🎯 Set Today's Intention" \
+            "← Back")
+    fi
+
+    case "$CHOICE" in
+        *"Start"*)
+            cmd_start
+            echo ""
+            gum input --placeholder "Press Enter..."
+            ;;
+        *"Stop"*)
+            cmd_stop
+            echo ""
+            gum input --placeholder "Press Enter..."
+            ;;
+        *"Log"*)
+            if [ -f "$FLOW_LOG" ]; then
+                gum pager < "$FLOW_LOG"
+            else
+                echo "No flow sessions logged yet."
+                gum input --placeholder "Press Enter..."
+            fi
+            ;;
+        *"Intention"*)
+            INTENT=$(gum input --placeholder "What are you building today?" --width 60)
+            if [ -n "$INTENT" ]; then
+                echo "$INTENT" > "$INTENT_FILE"
+                echo -e "\n\e[33m🎯 Intention set: $INTENT\e[0m"
+                gum input --placeholder "Press Enter..."
+            fi
+            ;;
+    esac
+    clear
+}
+
+# --- Main ---
+
+RESET="\e[0m"
+
+case "${1:-tui}" in
+    start)  cmd_start ;;
+    stop)   cmd_stop ;;
+    status) cmd_status ;;
+    waybar) cmd_waybar ;;
+    tui)    cmd_tui ;;
+    *)      echo "Usage: holy-flow [start|stop|status|waybar|tui]" ;;
+esac

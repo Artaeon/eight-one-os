@@ -1,0 +1,184 @@
+#!/usr/bin/env bash
+# EIGHT.ONE OS — Holy Dev
+# Project scaffolding — start building in seconds
+# Usage: holy-dev
+
+GOLD="\e[33m"
+CYAN="\e[36m"
+GREEN="\e[32m"
+DIM="\e[2m"
+BOLD="\e[1m"
+RESET="\e[0m"
+
+PROJECTS_DIR="$HOME/Projects"
+
+clear
+echo -e "${GOLD}${BOLD}"
+figlet -f small "Holy Dev" 2>/dev/null || echo "═══ HOLY DEV ═══"
+echo -e "${RESET}${DIM}Scaffold a new project in seconds.${RESET}\n"
+
+# Pick project type
+TYPE=$(gum choose \
+    "🦀 Rust (cargo)" \
+    "📦 Node.js (npm)" \
+    "🐍 Python (venv)" \
+    "🐹 Go (go mod)" \
+    "📝 General (plain)" \
+    "← Cancel")
+
+[ -z "$TYPE" ] || [[ "$TYPE" == *"Cancel"* ]] && exit 0
+
+# Pick destination folder
+DEST_FOLDER=$(gum choose \
+    "OpenSource" \
+    "Work" \
+    "PersonalBrand" \
+    "Custom location...")
+
+if [[ "$DEST_FOLDER" == "Custom"* ]]; then
+    DEST_FOLDER=$(gum input --placeholder "Enter folder path..." --width 60)
+    [ -z "$DEST_FOLDER" ] && exit 0
+else
+    DEST_FOLDER="$PROJECTS_DIR/$DEST_FOLDER"
+fi
+
+# Project name
+PROJECT_NAME=$(gum input --placeholder "Project name (e.g., my-awesome-app)" --width 50)
+[ -z "$PROJECT_NAME" ] && exit 0
+
+FULL_PATH="$DEST_FOLDER/$PROJECT_NAME"
+
+if [ -d "$FULL_PATH" ]; then
+    echo -e "${GOLD}Directory already exists: $FULL_PATH${RESET}"
+    exit 1
+fi
+
+echo -e "\n${CYAN}Creating project: ${BOLD}$PROJECT_NAME${RESET}\n"
+
+mkdir -p "$FULL_PATH"
+cd "$FULL_PATH" || exit 1
+
+# --- Scaffold based on type ---
+
+case "$TYPE" in
+    *"Rust"*)
+        cargo init . 2>/dev/null
+        echo -e "${GREEN}✓ Rust project initialized with Cargo${RESET}"
+        ;;
+    *"Node"*)
+        npm init -y 2>/dev/null
+        echo -e "${GREEN}✓ Node.js project initialized${RESET}"
+        ;;
+    *"Python"*)
+        python -m venv .venv 2>/dev/null
+        cat > main.py << 'PYEOF'
+"""EIGHT.ONE OS — New Python Project"""
+
+
+def main():
+    print("Hello from EIGHT.ONE OS 🏗️")
+
+
+if __name__ == "__main__":
+    main()
+PYEOF
+        cat > requirements.txt << 'EOF'
+# Add your dependencies here
+EOF
+        echo -e "${GREEN}✓ Python project initialized with venv${RESET}"
+        ;;
+    *"Go"*)
+        local go_module
+        go_module=$(gum input --placeholder "Go module name (e.g., github.com/user/project)" --value "github.com/$USER/$PROJECT_NAME" --width 60)
+        go mod init "$go_module" 2>/dev/null
+        cat > main.go << 'GOEOF'
+package main
+
+import "fmt"
+
+func main() {
+	fmt.Println("Hello from EIGHT.ONE OS 🏗️")
+}
+GOEOF
+        echo -e "${GREEN}✓ Go project initialized${RESET}"
+        ;;
+    *"General"*)
+        echo "# $PROJECT_NAME" > README.md
+        echo -e "${GREEN}✓ General project created${RESET}"
+        ;;
+esac
+
+# --- Common files ---
+
+# .editorconfig
+cat > .editorconfig << 'EOF'
+root = true
+
+[*]
+end_of_line = lf
+insert_final_newline = true
+charset = utf-8
+indent_style = space
+indent_size = 4
+trim_trailing_whitespace = true
+
+[*.{yml,yaml,json}]
+indent_size = 2
+
+[Makefile]
+indent_style = tab
+EOF
+
+# .gitignore (smart defaults)
+if [ ! -f .gitignore ]; then
+    cat > .gitignore << 'EOF'
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Build
+/target/
+/dist/
+/build/
+/node_modules/
+__pycache__/
+*.pyc
+.venv/
+
+# Environment
+.env
+.env.local
+EOF
+fi
+
+# README
+if [ ! -f README.md ]; then
+    cat > README.md << EOF
+# $PROJECT_NAME
+
+> Built with EIGHT.ONE OS 🏗️
+
+## Getting Started
+
+TODO: Add your project description here.
+EOF
+fi
+
+# Initialize git repo
+git init -q
+git add -A
+git commit -q -m "🎉 init: project scaffolded by EIGHT.ONE OS"
+
+echo -e "\n${GOLD}${BOLD}🏗️ Project ready!${RESET}"
+echo -e "${DIM}Location: $FULL_PATH${RESET}\n"
+
+if gum confirm "Open in Neovim?"; then
+    exec nvim .
+fi

@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+# EIGHT.ONE OS — Deep Git Integration
+# Wrap standard git commands or provide supercharged cloning
+
+CYAN="\e[36m"
+GOLD="\e[33m"
+BOLD="\e[1m"
+DIM="\e[2m"
+RESET="\e[0m"
+
+if [ "$1" == "clone" ] && [ -n "$2" ]; then
+    REPO_URL="$2"
+    
+    clear
+    echo -e "${GOLD}${BOLD}"
+    figlet -f small "Holy Git" 2>/dev/null || echo "═══ HOLY GIT ═══"
+    echo -e "${RESET}${DIM}Intelligent Repository Cloning${RESET}\n"
+    
+    echo -e "Target: ${CYAN}$REPO_URL${RESET}\n"
+    
+    DEST=$(gum choose \
+        "~/Projects" \
+        "~/Projects/OpenSource" \
+        "~/Projects/Work" \
+        "~/Projects/PersonalBrand" \
+        "Custom Location")
+        
+    if [ "$DEST" == "Custom Location" ]; then
+        TARGET_DIR=$(gum input --placeholder "Enter full path (e.g. ~/Downloads/repo)...")
+        TARGET_DIR=$(eval echo "$TARGET_DIR") # expand tilde
+    else
+        TARGET_DIR=$(eval echo "$DEST")
+    fi
+    
+    if [ -z "$TARGET_DIR" ]; then
+        echo "Cancelled."
+        exit 0
+    fi
+    
+    mkdir -p "$TARGET_DIR"
+    cd "$TARGET_DIR" || exit
+    
+    echo -e "\n${CYAN}Cloning into $TARGET_DIR...${RESET}"
+    git clone "$REPO_URL"
+    
+    # Extract dir name from URL
+    REPO_NAME=$(basename -s .git "$REPO_URL")
+    
+    if [ -d "$REPO_NAME" ]; then
+        echo -e "\n${GOLD}✓ Cloned successfully!${RESET}"
+        if gum confirm "Open $REPO_NAME in Neovim now?"; then
+            cd "$REPO_NAME" || exit
+            nvim .
+        fi
+    fi
+else
+    # Pass through to standard git for any other commands
+    git "$@"
+fi

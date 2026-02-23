@@ -1,0 +1,129 @@
+#!/usr/bin/env bash
+# EIGHT.ONE OS — Holy Dash
+# Builder's project dashboard — see all your projects at a glance
+# Usage: holy-dash
+
+GOLD="\e[33m"
+CYAN="\e[36m"
+GREEN="\e[32m"
+RED="\e[31m"
+YELLOW="\e[33m"
+DIM="\e[2m"
+BOLD="\e[1m"
+RESET="\e[0m"
+
+PROJECTS_DIR="$HOME/Projects"
+
+clear
+echo -e "${GOLD}${BOLD}"
+figlet -f small "Holy Dash" 2>/dev/null || echo "═══ HOLY DASH ═══"
+echo -e "${RESET}${DIM}Your Builder Dashboard${RESET}\n"
+
+# Gather all git repos
+repos=()
+while IFS= read -r gitdir; do
+    repo_dir=$(dirname "$gitdir")
+    repos+=("$repo_dir")
+done < <(find "$PROJECTS_DIR" -maxdepth 4 -name ".git" -type d 2>/dev/null | sort)
+
+if [ ${#repos[@]} -eq 0 ]; then
+    echo -e "${DIM}No git projects found in $PROJECTS_DIR${RESET}"
+    echo -e "Start building! Use ${CYAN}holy-dev${RESET} to scaffold a new project."
+    echo ""
+    gum input --placeholder "Press Enter..."
+    exit 0
+fi
+
+# Build display list
+display_items=()
+repo_map=()
+
+for repo in "${repos[@]}"; do
+    local_name="${repo#$PROJECTS_DIR/}"
+
+    # Get git status
+    cd "$repo" 2>/dev/null || continue
+
+    # Branch
+    branch=$(git branch --show-current 2>/dev/null || echo "detached")
+
+    # Status indicators
+    dirty=""
+    staged=$(git diff --cached --numstat 2>/dev/null | wc -l)
+    unstaged=$(git diff --numstat 2>/dev/null | wc -l)
+    untracked=$(git ls-files --others --exclude-standard 2>/dev/null | wc -l)
+
+    if [ "$staged" -gt 0 ]; then dirty="${dirty}+${staged} "; fi
+    if [ "$unstaged" -gt 0 ]; then dirty="${dirty}~${unstaged} "; fi
+    if [ "$untracked" -gt 0 ]; then dirty="${dirty}?${untracked} "; fi
+    [ -z "$dirty" ] && dirty="✓ clean"
+
+    # Last commit
+    last_commit=$(git log -1 --format="%ar" 2>/dev/null || echo "no commits")
+    last_msg=$(git log -1 --format="%s" 2>/dev/null | cut -c1-40 || echo "")
+
+    # Detect language
+    lang=""
+    [ -f "Cargo.toml" ] && lang="🦀"
+    [ -f "package.json" ] && lang="📦"
+    [ -f "go.mod" ] && lang="🐹"
+    [ -f "requirements.txt" ] || [ -f "pyproject.toml" ] && lang="🐍"
+    [ -f "Makefile" ] && [ -z "$lang" ] && lang="⚙️"
+    [ -z "$lang" ] && lang="📁"
+
+    display_items+=("$lang $local_name [$branch] $dirty — $last_commit")
+    repo_map+=("$repo")
+done
+
+cd "$HOME" || exit
+
+# Show the list
+echo -e "${CYAN}${#repos[@]} projects found:${RESET}\n"
+
+SELECTED=$(printf '%s\n' "${display_items[@]}" | gum choose --height 20)
+
+if [ -z "$SELECTED" ]; then
+    exit 0
+fi
+
+# Find the selected repo
+idx=0
+selected_repo=""
+for item in "${display_items[@]}"; do
+    if [ "$item" = "$SELECTED" ]; then
+        selected_repo="${repo_map[$idx]}"
+        break
+    fi
+    idx=$((idx + 1))
+done
+
+if [ -z "$selected_repo" ]; then
+    exit 0
+fi
+
+# Action menu
+echo -e "\n${GOLD}$SELECTED${RESET}\n"
+
+ACTION=$(gum choose \
+    "📂 Open in Neovim" \
+    "📜 View git log" \
+    "📊 Git status" \
+    "🐚 Open shell here" \
+    "← Back")
+
+case "$ACTION" in
+    *"Neovim"*)
+        cd "$selected_repo" && exec nvim .
+        ;;
+    *"git log"*)
+        cd "$selected_repo" && git log --oneline -20 | gum pager
+        ;;
+    *"status"*)
+        cd "$selected_repo" && git status | gum pager
+        ;;
+    *"shell"*)
+        echo -e "${CYAN}Opening shell in $selected_repo${RESET}"
+        echo -e "${DIM}Type 'exit' to return.${RESET}\n"
+        cd "$selected_repo" && exec "$SHELL"
+        ;;
+esac

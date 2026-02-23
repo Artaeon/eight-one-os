@@ -1,0 +1,137 @@
+#!/usr/bin/env bash
+# EIGHT.ONE OS — Holy Intent
+# Daily intention setter — asks once per day, shows in Waybar
+# Usage: holy-intent [set|show|waybar|review]
+
+GOLD="\e[33m"
+CYAN="\e[36m"
+DIM="\e[2m"
+BOLD="\e[1m"
+RESET="\e[0m"
+
+INTENT_DIR="$HOME/.local/share/holy-flow"
+INTENT_FILE="$INTENT_DIR/intent"
+INTENT_DATE="$INTENT_DIR/intent_date"
+INTENT_LOG="$HOME/Vault/intentions.md"
+
+mkdir -p "$INTENT_DIR"
+mkdir -p "$(dirname "$INTENT_LOG")"
+
+get_today() { date +%Y-%m-%d; }
+
+has_set_today() {
+    [ -f "$INTENT_DATE" ] && [ "$(cat "$INTENT_DATE")" = "$(get_today)" ]
+}
+
+cmd_set() {
+    clear
+    echo -e "${GOLD}${BOLD}"
+    figlet -f small "Builder" 2>/dev/null || echo "═══ BUILDER ═══"
+    echo -e "${RESET}"
+
+    echo -e "${CYAN}What are you building today?${RESET}\n"
+
+    INTENT=$(gum input \
+        --placeholder "e.g., Finishing the auth module for my SaaS" \
+        --width 70 \
+        --char-limit 100)
+
+    if [ -z "$INTENT" ]; then
+        echo -e "${DIM}No intention set. Open a terminal again to retry.${RESET}"
+        return
+    fi
+
+    # Save intent
+    echo "$INTENT" > "$INTENT_FILE"
+    get_today > "$INTENT_DATE"
+
+    # Log to vault
+    if [ ! -f "$INTENT_LOG" ]; then
+        echo "# 🎯 Builder Intentions" > "$INTENT_LOG"
+        echo "" >> "$INTENT_LOG"
+    fi
+
+    local today
+    today=$(get_today)
+    if ! grep -q "## $today" "$INTENT_LOG" 2>/dev/null; then
+        echo "" >> "$INTENT_LOG"
+        echo "## $today" >> "$INTENT_LOG"
+        echo "" >> "$INTENT_LOG"
+    fi
+
+    echo "- **Morning**: $INTENT" >> "$INTENT_LOG"
+
+    echo -e "\n${GOLD}🎯 Locked in: ${INTENT}${RESET}"
+    echo -e "${DIM}This will show in your Waybar all day. Go build.${RESET}\n"
+    sleep 1
+}
+
+cmd_review() {
+    if ! has_set_today; then
+        echo "No intention set today."
+        return
+    fi
+
+    clear
+    echo -e "${GOLD}${BOLD}"
+    figlet -f small "Review" 2>/dev/null || echo "═══ REVIEW ═══"
+    echo -e "${RESET}"
+
+    local intent=""
+    [ -f "$INTENT_FILE" ] && intent=$(cat "$INTENT_FILE")
+    echo -e "Today's intention: ${CYAN}$intent${RESET}\n"
+
+    COMPLETED=$(gum choose \
+        "✅ Yes, I shipped it" \
+        "🔄 Partially — still in progress" \
+        "❌ No — got blocked")
+
+    NOTES=$(gum input --placeholder "Any notes? (optional)" --width 70)
+
+    # Log review
+    local today
+    today=$(get_today)
+    echo "- **Evening**: $COMPLETED ${NOTES:+| $NOTES}" >> "$INTENT_LOG"
+
+    echo -e "\n${GOLD}📝 Review logged. Rest well, builder.${RESET}\n"
+    sleep 1
+}
+
+cmd_show() {
+    if [ -f "$INTENT_FILE" ]; then
+        cat "$INTENT_FILE"
+    else
+        echo "No intention set"
+    fi
+}
+
+cmd_waybar() {
+    if has_set_today && [ -f "$INTENT_FILE" ]; then
+        local intent
+        intent=$(cat "$INTENT_FILE")
+        # Truncate to 30 chars for bar display
+        local short="${intent:0:30}"
+        [ ${#intent} -gt 30 ] && short="${short}…"
+        printf '{"text": "🎯 %s", "tooltip": "Today: %s\\nRun holy-intent review to check in", "class": "active"}\n' \
+            "$short" "$intent"
+    else
+        printf '{"text": "🎯", "tooltip": "No intention set\\nOpen a terminal to set one", "class": "empty"}\n'
+    fi
+}
+
+cmd_check() {
+    # Called from .zshrc — only prompts once per day
+    if ! has_set_today; then
+        cmd_set
+    fi
+}
+
+# --- Main ---
+case "${1:-check}" in
+    set)     cmd_set ;;
+    show)    cmd_show ;;
+    review)  cmd_review ;;
+    waybar)  cmd_waybar ;;
+    check)   cmd_check ;;
+    *)       echo "Usage: holy-intent [set|show|review|waybar|check]" ;;
+esac

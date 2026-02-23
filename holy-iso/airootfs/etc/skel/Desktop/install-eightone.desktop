@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Install EIGHT.ONE OS
+Comment=Install EIGHT.ONE OS (Infinity One) to disk
+Exec=sudo calamares
+Icon=calamares
+Terminal=false
+Categories=Qt;System;

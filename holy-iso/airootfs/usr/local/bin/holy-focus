@@ -1,64 +1,177 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# EIGHT.ONE OS — Holy Focus
+# A distraction blocker with Builder Mode — the nuclear option for productivity.
+# Usage: holy-focus [activate|deactivate|builder|status]
 
-# holy-focus script
-# Block distracting websites by appending them to /etc/hosts temporarily.
-
-HOSTS_FILE="/etc/hosts"
-BACKUP_HOSTS="/etc/hosts.holy.bak"
-BLOCK_DURATION_MINS=120
+CYAN="\e[36m"
+GOLD="\e[33m"
+RED="\e[31m"
+GREEN="\e[32m"
+BOLD="\e[1m"
+DIM="\e[2m"
+RESET="\e[0m"
 
 DISTRACTIONS=(
-    "reddit.com" "www.reddit.com"
     "twitter.com" "www.twitter.com" "x.com" "www.x.com"
-    "youtube.com" "www.youtube.com"
-    "news.ycombinator.com"
     "facebook.com" "www.facebook.com"
     "instagram.com" "www.instagram.com"
+    "reddit.com" "www.reddit.com"
+    "tiktok.com" "www.tiktok.com"
+    "youtube.com" "www.youtube.com"
+    "netflix.com" "www.netflix.com"
+    "twitch.tv" "www.twitch.tv"
+    "discord.com" "www.discord.com"
 )
 
-if [ "$EUID" -ne 0 ]; then
-    echo "🙏 Monastic mode requires elevation (sudo) to block sites."
-    exec sudo "$0" "$@"
-fi
+BUILDER_STATE="$HOME/.local/share/holy-flow/builder_mode"
+mkdir -p "$HOME/.local/share/holy-flow"
 
-if [ "$1" == "stop" ]; then
-    if [ -f "$BACKUP_HOSTS" ]; then
-        mv "$BACKUP_HOSTS" "$HOSTS_FILE"
-        echo "🕊️  Monastic mode ended early. Distractions unblocked."
+is_focus_active() {
+    grep -q "holy-focus-block" /etc/hosts 2>/dev/null
+}
+
+is_builder_mode() {
+    [ -f "$BUILDER_STATE" ] && [ "$(cat "$BUILDER_STATE")" = "active" ]
+}
+
+activate_focus() {
+    echo -e "${CYAN}Muting notifications...${RESET}"
+    makoctl mode -s dnd 2>/dev/null
+
+    echo -e "${CYAN}Blocking distracting websites...${RESET}"
+    for site in "${DISTRACTIONS[@]}"; do
+        echo "127.0.0.1 $site # holy-focus-block" | sudo tee -a /etc/hosts > /dev/null
+        echo "::1 $site # holy-focus-block" | sudo tee -a /etc/hosts > /dev/null
+    done
+}
+
+deactivate_focus() {
+    echo -e "${CYAN}Restoring notifications...${RESET}"
+    makoctl mode -r dnd 2>/dev/null
+
+    echo -e "${CYAN}Unblocking websites...${RESET}"
+    sudo sed -i '/# holy-focus-block/d' /etc/hosts
+}
+
+activate_builder_mode() {
+    echo -e "\n${GOLD}${BOLD}⚡ BUILDER MODE ⚡${RESET}\n"
+    echo -e "${DIM}Terminal + Editor only. Everything else will be closed.${RESET}\n"
+
+    if ! gum confirm "This will close all browsers, media apps, and chat apps. Continue?"; then
+        return
+    fi
+
+    # Activate focus first
+    if ! is_focus_active; then
+        activate_focus
+    fi
+
+    # Kill non-essential apps
+    echo -e "${CYAN}Closing non-essential apps...${RESET}"
+    local kill_apps=("chromium" "firefox" "brave" "obsidian" "spotify" "discord" "telegram-desktop" "slack" "thunderbird" "mpv" "vlc" "libreoffice")
+    for app in "${kill_apps[@]}"; do
+        pkill -f "$app" 2>/dev/null
+    done
+
+    # Start flow timer automatically
+    holy-flow start 2>/dev/null
+
+    echo "active" > "$BUILDER_STATE"
+    echo -e "\n${GOLD}${BOLD}🏗️ Builder Mode ACTIVE${RESET}"
+    echo -e "Only your terminal and Neovim remain."
+    echo -e "${DIM}Run 'holy-focus' to deactivate when done.${RESET}\n"
+}
+
+deactivate_builder_mode() {
+    echo "inactive" > "$BUILDER_STATE"
+    holy-flow stop 2>/dev/null
+}
+
+# --- TUI ---
+
+show_tui() {
+    clear
+    echo -e "${GOLD}${BOLD}"
+    figlet -f small "Holy Focus" 2>/dev/null || echo "═══ HOLY FOCUS ═══"
+    echo -e "${RESET}${DIM}Protecting your time and attention.${RESET}\n"
+
+    # Show status
+    if is_builder_mode; then
+        echo -e "Status: ${RED}${BOLD}⚡ BUILDER MODE${RESET} (hardcore)\n"
+    elif is_focus_active; then
+        echo -e "Status: ${GOLD}🛡️ FOCUS ACTIVE${RESET} (sites blocked, notifications muted)\n"
     else
-        echo "You are not currently in Monastic mode."
+        echo -e "Status: ${GREEN}INACTIVE${RESET}\n"
     fi
-    exit 0
-fi
 
-if [ -f "$BACKUP_HOSTS" ]; then
-    echo "You are already in deeply focused Monastic Mode."
-    exit 1
-fi
+    # Menu
+    if is_builder_mode; then
+        CHOICE=$(gum choose \
+            "🔓 Deactivate Builder Mode" \
+            "📊 View Flow Status" \
+            "← Back")
+        case "$CHOICE" in
+            *"Deactivate"*)
+                deactivate_builder_mode
+                deactivate_focus
+                echo -e "\n${GREEN}✓ Builder Mode deactivated. Welcome back.${RESET}"
+                ;;
+            *"Flow"*)
+                holy-flow status
+                ;;
+        esac
+    elif is_focus_active; then
+        CHOICE=$(gum choose \
+            "🔓 Deactivate Focus" \
+            "⚡ Upgrade to Builder Mode" \
+            "← Back")
+        case "$CHOICE" in
+            *"Deactivate"*)
+                deactivate_focus
+                echo -e "\n${GREEN}✓ Focus Mode deactivated.${RESET}"
+                ;;
+            *"Builder"*)
+                activate_builder_mode
+                ;;
+        esac
+    else
+        CHOICE=$(gum choose \
+            "🛡️ Activate Focus (Block Sites + Mute)" \
+            "⚡ Activate Builder Mode (Nuclear Option)" \
+            "🔕 Mute Notifications Only" \
+            "← Back")
+        case "$CHOICE" in
+            *"Focus"*)
+                activate_focus
+                echo -e "\n${GOLD}✓ Focus Mode activated.${RESET}"
+                echo -e "Run ${CYAN}holy-focus${RESET} again to deactivate."
+                ;;
+            *"Builder"*)
+                activate_builder_mode
+                ;;
+            *"Mute"*)
+                makoctl mode -s dnd 2>/dev/null
+                echo -e "${GOLD}✓ Notifications silenced.${RESET}"
+                ;;
+        esac
+    fi
 
-echo "🛡️ Entering Monastic Mode for $BLOCK_DURATION_MINS minutes. Deep focus activated."
-
-# Backup
-cp "$HOSTS_FILE" "$BACKUP_HOSTS"
-
-{
     echo ""
-    echo "# === HOLY FOCUS BLOCKLIST ==="
-} >> "$HOSTS_FILE"
+    gum input --placeholder "Press Enter to exit..."
+    clear
+}
 
-for site in "${DISTRACTIONS[@]}"; do
-    echo "127.0.0.1 $site" >> "$HOSTS_FILE"
-    echo "::1       $site" >> "$HOSTS_FILE"
-done
+# --- Main ---
 
-echo "Temptations blocked. Enjoy your Vibe Coding."
-
-# Schedule unblock in background
-(
-    sleep $((BLOCK_DURATION_MINS * 60))
-    if [ -f "$BACKUP_HOSTS" ]; then
-        mv "$BACKUP_HOSTS" "$HOSTS_FILE"
-        sudo -u "$(logname)" notify-send "🕊️ Monastic Mode Complete" "You have conquered the flesh. Take a rest."
-    fi
-) &
-disown
+case "${1:-}" in
+    activate) activate_focus ;;
+    deactivate) deactivate_focus ;;
+    builder) activate_builder_mode ;;
+    status)
+        if is_builder_mode; then echo "builder"
+        elif is_focus_active; then echo "focus"
+        else echo "inactive"
+        fi
+        ;;
+    *) show_tui ;;
+esac

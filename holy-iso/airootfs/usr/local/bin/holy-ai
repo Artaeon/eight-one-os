@@ -1,19 +1,243 @@
-#!/bin/bash
-echo "=> Starting Holy AI Assistant (Powered by Llama3)..."
+#!/usr/bin/env bash
+# EIGHT.ONE OS — Holy AI
+# AI-powered dev workflows: chat, commit, review, ask
+# Usage: holy-ai [chat|commit|review <file>|ask <question>]
 
-# Ensure ollama is running or try starting it
-if ! systemctl is-active --quiet ollama; then
-    echo "Ollama service is not running. Starting it now..."
-    sudo systemctl start ollama || { echo "Failed to start Ollama. Are you rooted?"; exit 1; }
-fi
+CYAN="\e[36m"
+GOLD="\e[33m"
+RED="\e[31m"
+GREEN="\e[32m"
+BOLD="\e[1m"
+DIM="\e[2m"
+RESET="\e[0m"
 
-MODEL="llama3.2:1b" # Use a small model for local fast execution
+DEFAULT_MODEL="qwen2.5-coder:1.5b"
 
-# Check if model exists
-if ! ollama list | grep -q "$MODEL"; then
-    echo "=> Model '$MODEL' not found locally. Initializing download... This may take a minute."
-    ollama pull "$MODEL"
-fi
+ensure_ollama() {
+    if ! systemctl is-active --quiet ollama; then
+        echo -e "${CYAN}Starting Ollama service...${RESET}"
+        sudo systemctl start ollama 2>/dev/null
+        sleep 2
+    fi
 
-echo "=> AI Ready. State your question."
-ollama run "$MODEL"
+    MODELS=$(ollama list 2>/dev/null | tail -n +2 | awk '{print $1}')
+    if [ -z "$MODELS" ]; then
+        echo -e "${GOLD}No local AI models found.${RESET}"
+        if gum confirm "Download default model ($DEFAULT_MODEL)?"; then
+            echo -e "${CYAN}Downloading $DEFAULT_MODEL...${RESET}"
+            ollama pull "$DEFAULT_MODEL"
+        else
+            echo "Cannot proceed without a model."
+            exit 1
+        fi
+        MODELS="$DEFAULT_MODEL"
+    fi
+}
+
+get_model() {
+    # Use first available model, or let user pick
+    echo "$MODELS" | head -1
+}
+
+# --- Chat Mode (original behavior) ---
+cmd_chat() {
+    clear
+    echo -e "${GOLD}${BOLD}"
+    figlet -f small "Holy AI" 2>/dev/null || echo "═══ HOLY AI ═══"
+    echo -e "${RESET}${DIM}Local Intelligence for EIGHT.ONE OS${RESET}\n"
+
+    ensure_ollama
+
+    echo -e "${CYAN}Available Models:${RESET}"
+    MODEL_CHOICE=$(echo "$MODELS" | gum choose)
+    [ -z "$MODEL_CHOICE" ] && exit 0
+
+    clear
+    echo -e "${GOLD}✝ Entering conversation with ${BOLD}$MODEL_CHOICE${RESET}${GOLD} ✝${RESET}"
+    echo -e "${DIM}(Type '/bye' to exit)${RESET}\n"
+    ollama run "$MODEL_CHOICE"
+}
+
+# --- AI Commit Message ---
+cmd_commit() {
+    ensure_ollama
+    local model
+    model=$(get_model)
+
+    # Check if in a git repo
+    if ! git rev-parse --is-inside-work-tree &>/dev/null; then
+        echo -e "${RED}Not in a git repository.${RESET}"
+        exit 1
+    fi
+
+    # Get staged diff
+    local diff
+    diff=$(git diff --cached --stat 2>/dev/null)
+
+    if [ -z "$diff" ]; then
+        echo -e "${GOLD}No staged changes. Stage files first:${RESET}"
+        echo -e "${DIM}  git add <files>${RESET}"
+        exit 1
+    fi
+
+    local full_diff
+    full_diff=$(git diff --cached 2>/dev/null | head -200)
+
+    echo -e "${CYAN}📝 Generating commit message from staged changes...${RESET}\n"
+    echo -e "${DIM}Staged:${RESET}"
+    echo "$diff"
+    echo ""
+
+    # Generate commit message via Ollama
+    local prompt="You are a commit message generator. Generate a single conventional commit message for the following git diff. Use the format: type(scope): description. Types: feat, fix, refactor, docs, style, test, chore. Keep it under 72 characters. Only output the commit message, nothing else.
+
+Diff:
+$full_diff"
+
+    local message
+    message=$(echo "$prompt" | ollama run "$model" 2>/dev/null | head -1 | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//')
+
+    if [ -z "$message" ]; then
+        echo -e "${RED}Failed to generate commit message.${RESET}"
+        exit 1
+    fi
+
+    echo -e "${GOLD}Suggested commit message:${RESET}"
+    echo -e "${BOLD}  $message${RESET}\n"
+
+    CHOICE=$(gum choose \
+        "✅ Use this message" \
+        "✏️  Edit this message" \
+        "🔄 Regenerate" \
+        "❌ Cancel")
+
+    case "$CHOICE" in
+        *"Use"*)
+            git commit -m "$message"
+            echo -e "\n${GREEN}✓ Committed!${RESET}"
+            ;;
+        *"Edit"*)
+            local edited
+            edited=$(gum input --value "$message" --width 72)
+            if [ -n "$edited" ]; then
+                git commit -m "$edited"
+                echo -e "\n${GREEN}✓ Committed!${RESET}"
+            fi
+            ;;
+        *"Regenerate"*)
+            cmd_commit
+            ;;
+        *)
+            echo "Cancelled."
+            ;;
+    esac
+}
+
+# --- AI Code Review ---
+cmd_review() {
+    local file="$1"
+
+    if [ -z "$file" ]; then
+        echo -e "${GOLD}Usage: holy-ai review <file>${RESET}"
+        exit 1
+    fi
+
+    if [ ! -f "$file" ]; then
+        echo -e "${RED}File not found: $file${RESET}"
+        exit 1
+    fi
+
+    ensure_ollama
+    local model
+    model=$(get_model)
+
+    local content
+    content=$(head -150 "$file")
+    local filename
+    filename=$(basename "$file")
+
+    echo -e "${CYAN}🔍 Reviewing ${BOLD}$filename${RESET}${CYAN}...${RESET}\n"
+
+    local prompt="You are a senior code reviewer. Review the following code and provide:
+1. A brief summary of what this code does
+2. Any bugs or issues you find
+3. Security concerns if any
+4. Suggestions for improvement
+Keep your review concise and actionable. Use markdown formatting.
+
+File: $filename
+\`\`\`
+$content
+\`\`\`"
+
+    echo "$prompt" | ollama run "$model" 2>/dev/null | gum format
+    echo ""
+}
+
+# --- AI Quick Ask ---
+cmd_ask() {
+    local question="$*"
+
+    if [ -z "$question" ]; then
+        question=$(gum input --placeholder "Ask me anything about code..." --width 70)
+        [ -z "$question" ] && exit 0
+    fi
+
+    ensure_ollama
+    local model
+    model=$(get_model)
+
+    # Check for README context
+    local context=""
+    if [ -f "README.md" ]; then
+        context="Project context from README.md:
+$(head -30 README.md)
+
+"
+    fi
+
+    echo -e "${CYAN}🤔 Thinking...${RESET}\n"
+
+    local prompt="${context}Question: $question
+
+Provide a concise, practical answer. If it involves code, show a short example. Use markdown formatting."
+
+    echo "$prompt" | ollama run "$model" 2>/dev/null | gum format
+    echo ""
+}
+
+# --- TUI Menu ---
+cmd_menu() {
+    clear
+    echo -e "${GOLD}${BOLD}"
+    figlet -f small "Holy AI" 2>/dev/null || echo "═══ HOLY AI ═══"
+    echo -e "${RESET}${DIM}AI-Powered Development for EIGHT.ONE OS${RESET}\n"
+
+    CHOICE=$(gum choose \
+        "💬 Chat — Open a conversation with local AI" \
+        "📝 Commit — Generate AI commit message from staged changes" \
+        "🔍 Review — AI code review on a file" \
+        "🤔 Ask — Ask a quick coding question" \
+        "← Back")
+
+    case "$CHOICE" in
+        *"Chat"*)    cmd_chat ;;
+        *"Commit"*)  cmd_commit ;;
+        *"Review"*)
+            local file
+            file=$(gum input --placeholder "Enter file path to review..." --width 60)
+            [ -n "$file" ] && cmd_review "$file"
+            ;;
+        *"Ask"*)     cmd_ask ;;
+    esac
+}
+
+# --- Main ---
+case "${1:-menu}" in
+    chat)    cmd_chat ;;
+    commit)  cmd_commit ;;
+    review)  shift; cmd_review "$@" ;;
+    ask)     shift; cmd_ask "$@" ;;
+    menu)    cmd_menu ;;
+    *)       echo "Usage: holy-ai [chat|commit|review <file>|ask <question>]" ;;
+esac

@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2034
 
-iso_name="holy-arch"
-iso_label="HOLY_$(date --date="@${SOURCE_DATE_EPOCH:-$(date +%s)}" +%Y%m)"
-iso_publisher="RRL <https://github.com/rrl>"
-iso_application="Holy Arch Linux distribution"
+iso_name="eight-one-os"
+iso_label="EIGHT_ONE_$(date --date="@${SOURCE_DATE_EPOCH:-$(date +%s)}" +%Y%m)"
+iso_publisher="Artaeon & Raphael Lugmayr"
+iso_application="EIGHT.ONE OS Distribution"
 iso_version="$(date --date="@${SOURCE_DATE_EPOCH:-$(date +%s)}" +%Y.%m.%d)"
 install_dir="arch"
 buildmodes=('iso')
@@ -28,4 +28,13 @@ file_permissions=(
   ["/usr/local/bin/holy-vibes"]="0:0:755"
   ["/usr/local/bin/holy-sabbath"]="0:0:755"
   ["/usr/local/bin/start-hyprland"]="0:0:755"
+  ["/usr/local/bin/holy-welcome"]="0:0:755"
+  ["/usr/local/bin/holy-settings"]="0:0:755"
+  ["/usr/local/bin/eightone-update"]="0:0:755"
+  ["/usr/local/bin/holy-git"]="0:0:755"
+  ["/usr/local/bin/holy-install"]="0:0:755"
+  ["/usr/local/bin/holy-flow"]="0:0:755"
+  ["/usr/local/bin/holy-intent"]="0:0:755"
+  ["/usr/local/bin/holy-dash"]="0:0:755"
+  ["/usr/local/bin/holy-dev"]="0:0:755"
 )

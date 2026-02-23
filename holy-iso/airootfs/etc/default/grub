@@ -1,0 +1,25 @@
+# GRUB boot loader configuration
+
+GRUB_DEFAULT=0
+GRUB_TIMEOUT=5
+GRUB_DISTRIBUTOR="EIGHT.ONE OS (Infinity One)"
+GRUB_CMDLINE_LINUX_DEFAULT="splash quiet loglevel=3"
+GRUB_CMDLINE_LINUX=""
+
+# Preload both GPT and MBR modules so that they are not missed
+GRUB_PRELOAD_MODULES="part_gpt part_msdos"
+
+# Uncomment to enable booting from LUKS encrypted devices
+#GRUB_ENABLE_CRYPTODISK=y
+
+# Custom EIGHT.ONE OS Theme
+GRUB_THEME="/usr/share/grub/themes/eightone/theme.txt"
+GRUB_GFXMODE=auto
+#GRUB_BACKGROUND="/usr/share/grub/themes/eightone/background.png"
+
+# Uncomment if you want to use the PC speaker
+#GRUB_INIT_TUNE="480 440 1"
+
+# EIGHT.ONE OS: Enable BTRFS snapshots in GRUB menu
+GRUB_BTRFS_OVERRIDE_BOOT_PARTITION_DETECTION=true
+GRUB_DISABLE_OS_PROBER=false

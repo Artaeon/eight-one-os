@@ -1,0 +1,19 @@
+[Plymouth Theme]
+Name=EightOne
+Description=EIGHT.ONE OS (Infinity One) Boot Splash
+ModuleName=two-step
+
+[two-step]
+ImageDir=/usr/share/plymouth/themes/eightone
+HorizontalAlignment=.5
+VerticalAlignment=.5
+BackgroundStartColor=0x0a0a0f
+BackgroundEndColor=0x000000
+Title=EIGHT.ONE OS
+TitleHorizontalAlignment=.5
+TitleVerticalAlignment=.75
+TitleColor=0xd4af37
+Transition=none
+TransitionDuration=0.0
+ProgressBarShowPercentComplete=true
+MessageBelowAnimation=false

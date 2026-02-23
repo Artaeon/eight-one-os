@@ -6,11 +6,25 @@
     "margin-left": 10,
     "margin-right": 10,
     "spacing": 0,
-
-    "modules-left": ["hyprland/workspaces", "hyprland/window"],
-    "modules-center": ["clock"],
-    "modules-right": ["custom/sabbath", "pulseaudio", "network", "cpu", "memory", "disk", "battery", "tray"],
-
+    "modules-left": [
+        "hyprland/workspaces",
+        "custom/flow",
+        "custom/intent",
+        "hyprland/window"
+    ],
+    "modules-center": [
+        "clock"
+    ],
+    "modules-right": [
+        "custom/sabbath",
+        "pulseaudio",
+        "network",
+        "cpu",
+        "memory",
+        "disk",
+        "battery",
+        "tray"
+    ],
     "hyprland/workspaces": {
         "format": "{icon}",
         "format-icons": {
@@ -25,7 +39,6 @@
         "on-scroll-up": "hyprctl dispatch workspace e+1",
         "on-scroll-down": "hyprctl dispatch workspace e-1"
     },
-
     "hyprland/window": {
         "format": "{}",
         "max-length": 50,
@@ -34,48 +47,57 @@
             "(.*) — Neovim": "  $1"
         }
     },
-
     "clock": {
         "format": "  {:%H:%M}",
         "format-alt": "  {:%A, %B %d, %Y}",
         "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>",
         "interval": 1
     },
-
     "custom/sabbath": {
         "exec": "/usr/local/bin/holy-sabbath",
         "return-type": "json",
         "interval": 3600,
         "format": "🕊️ {}"
     },
-
+    "custom/flow": {
+        "exec": "/usr/local/bin/holy-flow waybar",
+        "return-type": "json",
+        "interval": 5,
+        "on-click": "kitty --title 'Holy Flow' /usr/local/bin/holy-flow tui"
+    },
+    "custom/intent": {
+        "exec": "/usr/local/bin/holy-intent waybar",
+        "return-type": "json",
+        "interval": 60,
+        "on-click": "kitty --title 'Holy Intent' /usr/local/bin/holy-intent set"
+    },
     "cpu": {
         "format": "  {usage}%",
         "tooltip": true,
         "interval": 2
     },
-
     "memory": {
         "format": "  {percentage}%",
         "tooltip-format": "{used:0.1f}G / {total:0.1f}G used",
         "interval": 2
     },
-
     "disk": {
         "format": "󰋊 {percentage_used}%",
         "path": "/",
         "interval": 30
     },
-
     "pulseaudio": {
         "format": "{icon} {volume}%",
         "format-muted": "󰖁 Muted",
         "format-icons": {
-            "default": ["󰕿", "󰖀", "󰕾"]
+            "default": [
+                "󰕿",
+                "󰖀",
+                "󰕾"
+            ]
         },
         "on-click": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
     },
-
     "network": {
         "format-wifi": "󰤨 {essid}",
         "format-ethernet": "󰈀 {ipaddr}",
@@ -83,13 +105,23 @@
         "format-disconnected": "󰤭 Offline",
         "tooltip-format": "{ifname}: {ipaddr}/{cidr}\n⬆️ {bandwidthUpBytes} ⬇️ {bandwidthDownBytes}"
     },
-
     "battery": {
         "format": "{icon} {capacity}%",
-        "format-icons": ["󰂎", "󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"],
+        "format-icons": [
+            "󰂎",
+            "󰁺",
+            "󰁻",
+            "󰁼",
+            "󰁽",
+            "󰁾",
+            "󰁿",
+            "󰂀",
+            "󰂁",
+            "󰂂",
+            "󰁹"
+        ],
         "format-charging": "󰂄 {capacity}%"
     },
-
     "tray": {
         "icon-size": 16,
         "spacing": 8

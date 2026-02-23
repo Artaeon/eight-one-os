@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# EIGHT.ONE OS — Holy Installer Wrapper
+# Launches archinstall with specific instructions to ensure BTRFS and GRUB are chosen.
+
+CYAN="\e[36m"
+GOLD="\e[33m"
+BOLD="\e[1m"
+DIM="\e[2m"
+RESET="\e[0m"
+
+clear
+echo -e "${GOLD}${BOLD}"
+figlet -f small "Holy Install" 2>/dev/null || echo "═══ HOLY INSTALLER ═══"
+echo -e "${RESET}${DIM}EIGHT.ONE OS System Installer${RESET}\n"
+
+echo -e "This wizard will launch the official Arch Linux installer (\`archinstall\`)."
+echo -e "To ensure EIGHT.ONE OS installs correctly with ${GOLD}system snapshots${RESET} and the ${GOLD}animated bootloader${RESET},"
+echo -e "please make sure you select the following options during the setup:\n"
+
+echo -e "  ${CYAN}1. Bootloader:${RESET} grub-install"
+echo -e "  ${CYAN}2. File System:${RESET} btrfs (and choose 'yes' for default subvolumes)"
+echo -e "  ${CYAN}3. Profile:${RESET} Leave blank (do not select a desktop environment, everything is pre-configured)"
+echo -e "  ${CYAN}4. Network:${RESET} NetworkManager\n"
+
+if gum confirm "Ready to start the installation?"; then
+    # Launch the official archinstall
+    archinstall
+    
+    echo -e "\n${GOLD}✓ Installation process finished.${RESET}"
+    echo -e "If the installation was successful, you can now reboot your machine."
+    echo -e "Your GRUB menu and Snapshots will be automatically configured."
+else
+    echo "Installation cancelled."
+    exit 0
+fi

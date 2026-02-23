@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+
+# EIGHT.ONE OS Welcome Wizard
+# Requires: gum, figlet
+
+# Set colors
+GOLD="#d4af37"
+CYAN="#45b7d1"
+
+clear
+
+# Print title
+gum style \
+	--foreground "$GOLD" \
+	--border-foreground "$GOLD" \
+	--border double \
+	--align center \
+	--width 80 \
+	--margin "1 2" \
+	--padding "1 2" \
+	"$(figlet -c -f slant "EIGHT.ONE OS")"
+
+echo -e "\n"
+gum style --foreground "$CYAN" --align center --width 80 "Welcome to the Holy Live Environment."
+
+echo -e "\n"
+if gum confirm "Would you like to read about the philosophy and features of EIGHT.ONE OS?"; then
+    clear
+    gum format < ~/why-eight-one.md
+    echo -e "\n"
+	gum input --prompt "Press Enter to continue..." --placeholder "" > /dev/null
+fi
+
+clear
+gum style \
+	--foreground "$GOLD" \
+	--border-foreground "$GOLD" \
+	--border rounded \
+	--align center \
+	--width 80 \
+	--margin "1 2" \
+	--padding "1 2" \
+	"LIVE USER SETUP"
+
+echo -e "\nTo ensure a secure live session, please set a password for the 'holy' user.\n"
+
+PASSWORD_SET=false
+while [ "$PASSWORD_SET" = false ]; do
+    PASS1=$(gum input --password --placeholder "Enter new password")
+    PASS2=$(gum input --password --placeholder "Confirm new password")
+
+    if [ -z "$PASS1" ]; then
+        gum style --foreground "#ff0000" "Password cannot be empty."
+    elif [ "$PASS1" != "$PASS2" ]; then
+        gum style --foreground "#ff0000" "Passwords do not match. Try again."
+    else
+        echo -e "$PASS1\n$PASS2" | sudo passwd holy > /dev/null 2>&1
+        gum style --foreground "#00ff00" "Password successfully set!"
+        PASSWORD_SET=true
+    fi
+done
+
+echo -e "\n"
+gum spin --spinner dot --title "Initializing Holy Environment..." -- sleep 2
+
+touch ~/.welcome_done
+clear
+echo -e "\n"
+gum style --foreground "$GOLD" --align center --width 80 "System Ready. Go forth and build."
+echo -e "\n"

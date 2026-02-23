@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+# EIGHT.ONE OS — Git-based OS Updater
+# Pulls latest settings, scripts, and dotfiles from the central repository.
+
+GOLD="\e[33m"
+CYAN="\e[36m"
+BOLD="\e[1m"
+RESET="\e[0m"
+
+REPO_URL="https://github.com/RaphaelLugmayr/eightone-os.git"
+CLONE_DIR="$HOME/.eightone-os"
+
+clear
+echo -e "${GOLD}${BOLD}"
+figlet -f small "8.1 Updater" 2>/dev/null || echo "═══ 8.1 OS UPDATER ═══"
+echo -e "${RESET}"
+
+echo -e "This will sync your system with the latest EIGHT.ONE OS code."
+echo -e "Repository: ${CYAN}$REPO_URL${RESET}\n"
+
+if ! gum confirm "Proceed with the update?"; then
+    echo "Update cancelled."
+    exit 0
+fi
+
+# 1. Update pacman packages first
+echo -e "\n${GOLD}⟐ Step 1: Updating System Packages${RESET}"
+sudo pacman -Syu --noconfirm
+
+# 2. Clone or pull the repo
+echo -e "\n${GOLD}⟐ Step 2: Syncing EIGHT.ONE Repository${RESET}"
+if [ -d "$CLONE_DIR" ]; then
+    echo "Repository exists. Pulling latest changes..."
+    cd "$CLONE_DIR" || exit
+    git pull origin main
+else
+    echo "Cloning repository..."
+    git clone "$REPO_URL" "$CLONE_DIR"
+    cd "$CLONE_DIR" || exit
+fi
+
+# 3. Apply configurations (Assuming standard structure in the repo)
+echo -e "\n${GOLD}⟐ Step 3: Applying Configurations${RESET}"
+
+if [ -d "$CLONE_DIR/airootfs/etc/skel/.config" ]; then
+    echo "Syncing dotfiles..."
+    cp -r "$CLONE_DIR/airootfs/etc/skel/.config/"* "$HOME/.config/"
+fi
+
+if [ -d "$CLONE_DIR/airootfs/usr/local/bin" ]; then
+    echo "Updating system scripts..."
+    sudo cp -r "$CLONE_DIR/airootfs/usr/local/bin/"* /usr/local/bin/
+    sudo chmod +x /usr/local/bin/*
+fi
+
+echo -e "\n${GOLD}${BOLD}✓ EIGHT.ONE OS UPDATE COMPLETE!${RESET}"
+echo -e "Some changes (like Hyprland config) take effect immediately."
+echo -e "Others may require a restart."
+echo ""
+gum input --placeholder "Press Enter to finish..."
+clear

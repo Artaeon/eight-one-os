@@ -1,0 +1,78 @@
+// EIGHT.ONE OS Plymouth Boot Script
+// Premium pulsing logo animation on black background
+
+// Load the watermark logo
+logo = Image("watermark.png");
+
+// Get screen dimensions
+screen_width = Window.GetWidth();
+screen_height = Window.GetHeight();
+
+// Scale logo to reasonable size (40% of screen width)
+logo_scale = screen_width * 0.4 / logo.GetWidth();
+scaled_logo = logo.Scale(logo.GetWidth() * logo_scale, logo.GetHeight() * logo_scale);
+
+// Create sprite and center it
+logo_sprite = Sprite(scaled_logo);
+logo_sprite.SetX(screen_width / 2 - scaled_logo.GetWidth() / 2);
+logo_sprite.SetY(screen_height / 2 - scaled_logo.GetHeight() / 2);
+logo_sprite.SetZ(10);
+logo_sprite.SetOpacity(1.0);
+
+// Create a simple progress bar
+progress_box_image = Image("watermark.png");
+
+// Pulsing animation
+pulse_direction = 1;
+pulse_opacity = 0.6;
+
+fun refresh_callback() {
+    // Pulse the logo opacity between 0.5 and 1.0
+    pulse_opacity += pulse_direction * 0.008;
+    if (pulse_opacity >= 1.0) {
+        pulse_opacity = 1.0;
+        pulse_direction = -1;
+    }
+    if (pulse_opacity <= 0.5) {
+        pulse_opacity = 0.5;
+        pulse_direction = 1;
+    }
+    logo_sprite.SetOpacity(pulse_opacity);
+}
+
+Plymouth.SetRefreshFunction(refresh_callback);
+
+// Progress callback — draw a thin gold progress bar at the bottom
+progress_bar = Sprite();
+
+fun progress_callback(duration, progress) {
+    if (progress > 0) {
+        bar_width = screen_width * 0.5 * progress;
+        bar_height = 3;
+        bar_image = Image.Text("", 0.83, 0.69, 0.22);
+
+        // Create a gold bar using a colored rectangle
+        bar_image = Image("watermark.png").Scale(bar_width, bar_height);
+        progress_bar.SetImage(bar_image);
+        progress_bar.SetX(screen_width / 2 - screen_width * 0.25);
+        progress_bar.SetY(screen_height * 0.85);
+        progress_bar.SetZ(20);
+        progress_bar.SetOpacity(0.8);
+    }
+}
+
+Plymouth.SetBootProgressFunction(progress_callback);
+
+// Hide password prompt text styling
+fun display_password_callback(prompt, bullets) {
+    // Minimal password display for disk encryption
+    return [];
+}
+
+// Message callback
+fun message_callback(text) {
+    // Suppress boot messages for clean look
+}
+
+Plymouth.SetDisplayPasswordFunction(display_password_callback);
+Plymouth.SetMessageFunction(message_callback);

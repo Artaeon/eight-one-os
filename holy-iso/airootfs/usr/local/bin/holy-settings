@@ -1,0 +1,338 @@
+#!/usr/bin/env bash
+# ╔═══════════════════════════════════════════╗
+# ║   EIGHT.ONE OS — Holy Settings Menu       ║
+# ║   A premium TUI settings experience       ║
+# ╚═══════════════════════════════════════════╝
+
+GOLD="\e[33m"
+WHITE="\e[97m"
+CYAN="\e[36m"
+DIM="\e[2m"
+BOLD="\e[1m"
+RESET="\e[0m"
+
+show_header() {
+    clear
+    echo -e "${GOLD}${BOLD}"
+    figlet -f small "8.1 Settings" 2>/dev/null || echo "═══ 8.1 SETTINGS ═══"
+    echo -e "${RESET}${DIM}EIGHT.ONE OS · Infinity One · $(date +%Y.%m.%d)${RESET}"
+    echo ""
+}
+
+# ─── System Update ───
+do_update() {
+    show_header
+    echo -e "${GOLD}⟐ System Update${RESET}\n"
+    gum confirm "Update all system packages?" && {
+        echo -e "${CYAN}Updating keyring...${RESET}"
+        sudo pacman -Sy --noconfirm archlinux-keyring 2>/dev/null
+        echo -e "${CYAN}Updating packages...${RESET}"
+        sudo pacman -Syu --noconfirm
+        echo -e "\n${GOLD}✓ Update complete!${RESET}"
+    }
+    echo ""
+    gum input --placeholder "Press Enter to continue..."
+}
+
+# ─── Install Software ───
+do_install() {
+    show_header
+    echo -e "${GOLD}⟐ Install Software${RESET}\n"
+    
+    CHOICE=$(gum choose \
+        "🔍 Search Packages" \
+        "📝 Code Editors" \
+        "🌐 Browsers" \
+        "🎮 Gaming" \
+        "📦 Install from AUR (yay)" \
+        "← Back")
+    
+    case "$CHOICE" in
+        *"Search Packages"*)
+            PKG=$(gum input --placeholder "Enter package name to search...")
+            [ -n "$PKG" ] && pacman -Ss "$PKG" | head -40
+            gum input --placeholder "Press Enter to continue..."
+            ;;
+        *"Code Editors"*)
+            EDITOR=$(gum choose "neovim (installed)" "code (VSCode)" "zed" "helix" "sublime-text" "← Back")
+            case "$EDITOR" in
+                *code*) sudo pacman -S --noconfirm code 2>/dev/null || echo "Use AUR for VSCode" ;;
+                *zed*) sudo pacman -S --noconfirm zed 2>/dev/null || echo "Use AUR for Zed" ;;
+                *helix*) sudo pacman -S --noconfirm helix ;;
+            esac
+            gum input --placeholder "Press Enter to continue..."
+            ;;
+        *"Browsers"*)
+            BROWSER=$(gum choose "firefox" "chromium" "brave (AUR)" "← Back")
+            case "$BROWSER" in
+                *firefox*) sudo pacman -S --noconfirm firefox ;;
+                *chromium*) sudo pacman -S --noconfirm chromium ;;
+            esac
+            gum input --placeholder "Press Enter to continue..."
+            ;;
+        *"Gaming"*)
+            GAME=$(gum choose "steam" "lutris" "mangohud" "gamemode" "← Back")
+            [ "$GAME" != "← Back" ] && sudo pacman -S --noconfirm "$GAME" 2>/dev/null
+            gum input --placeholder "Press Enter to continue..."
+            ;;
+    esac
+}
+
+# ─── Display & Monitors ───
+do_display() {
+    show_header
+    echo -e "${GOLD}⟐ Display Settings${RESET}\n"
+    
+    echo -e "${CYAN}Current monitors:${RESET}"
+    hyprctl monitors 2>/dev/null || echo "Hyprland not running"
+    echo ""
+    
+    CHOICE=$(gum choose \
+        "🖥️  Set Resolution" \
+        "📐 Set Scale" \
+        "🔄 Set Refresh Rate" \
+        "← Back")
+    
+    case "$CHOICE" in
+        *"Resolution"*)
+            MON=$(hyprctl monitors -j 2>/dev/null | jq -r '.[].name' | gum choose)
+            RES=$(gum input --placeholder "e.g. 1920x1080")
+            [ -n "$MON" ] && [ -n "$RES" ] && hyprctl keyword monitor "$MON,$RES,auto,1"
+            ;;
+        *"Scale"*)
+            SCALE=$(gum choose "1.0" "1.25" "1.5" "1.75" "2.0")
+            MON=$(hyprctl monitors -j 2>/dev/null | jq -r '.[].name' | head -1)
+            [ -n "$MON" ] && hyprctl keyword monitor "$MON,preferred,auto,$SCALE"
+            ;;
+        *"Refresh Rate"*)
+            RATE=$(gum choose "60" "75" "120" "144" "165" "240")
+            MON=$(hyprctl monitors -j 2>/dev/null | jq -r '.[].name' | head -1)
+            [ -n "$MON" ] && hyprctl keyword monitor "$MON,preferred@${RATE},auto,1"
+            ;;
+    esac
+    gum input --placeholder "Press Enter to continue..."
+}
+
+# ─── Network ───
+do_network() {
+    show_header
+    echo -e "${GOLD}⟐ Network Settings${RESET}\n"
+    
+    CHOICE=$(gum choose \
+        "📶 WiFi (iwctl)" \
+        "🔌 Wired Status" \
+        "🌐 IP Address" \
+        "🔍 DNS Test" \
+        "← Back")
+    
+    case "$CHOICE" in
+        *"WiFi"*)
+            if command -v iwctl &>/dev/null; then
+                iwctl station wlan0 scan 2>/dev/null
+                sleep 2
+                echo -e "${CYAN}Available networks:${RESET}"
+                iwctl station wlan0 get-networks 2>/dev/null
+                SSID=$(gum input --placeholder "Enter WiFi SSID to connect...")
+                [ -n "$SSID" ] && iwctl station wlan0 connect "$SSID"
+            else
+                echo "iwctl not available"
+            fi
+            ;;
+        *"Wired"*)
+            ip link show | grep -E "^[0-9]|state"
+            ;;
+        *"IP Address"*)
+            ip -c addr show | grep -E "inet |link/"
+            ;;
+        *"DNS"*)
+            echo -e "${CYAN}Testing DNS resolution...${RESET}"
+            ping -c 3 archlinux.org 2>/dev/null || echo "No network connection"
+            ;;
+    esac
+    echo ""
+    gum input --placeholder "Press Enter to continue..."
+}
+
+# ─── Keyboard & Language ───
+do_keyboard() {
+    show_header
+    echo -e "${GOLD}⟐ Keyboard & Language${RESET}\n"
+    
+    echo -e "${CYAN}Current layout:${RESET} $(localectl status 2>/dev/null | grep 'X11 Layout' || cat /etc/vconsole.conf 2>/dev/null)"
+    echo ""
+    
+    LAYOUT=$(gum choose "us" "de" "gb" "fr" "es" "it" "pt" "ru" "jp" "← Back")
+    
+    if [ "$LAYOUT" != "← Back" ]; then
+        echo "KEYMAP=$LAYOUT" | sudo tee /etc/vconsole.conf > /dev/null
+        # Update Hyprland live
+        hyprctl keyword input:kb_layout "$LAYOUT" 2>/dev/null
+        echo -e "${GOLD}✓ Keyboard set to: $LAYOUT${RESET}"
+    fi
+    gum input --placeholder "Press Enter to continue..."
+}
+
+# ─── Appearance ───
+do_appearance() {
+    show_header
+    echo -e "${GOLD}⟐ Appearance${RESET}\n"
+    
+    CHOICE=$(gum choose \
+        "🎨 Border Color" \
+        "📏 Gap Size" \
+        "🔲 Border Width" \
+        "🌊 Rounding" \
+        "✨ Animations Toggle" \
+        "← Back")
+    
+    case "$CHOICE" in
+        *"Border Color"*)
+            COLOR=$(gum choose \
+                "Gold (d4af37)" \
+                "Cyan (00ffff)" \
+                "Purple (9b59b6)" \
+                "Red (e74c3c)" \
+                "Green (2ecc71)" \
+                "White (ffffff)")
+            HEX=$(echo "$COLOR" | grep -oP '\(.*?\)' | tr -d '()')
+            [ -n "$HEX" ] && hyprctl keyword general:col.active_border "rgba(${HEX}ee)" 2>/dev/null
+            ;;
+        *"Gap Size"*)
+            GAP=$(gum choose "0" "3" "5" "8" "10" "15" "20")
+            hyprctl keyword general:gaps_out "$GAP" 2>/dev/null
+            hyprctl keyword general:gaps_in "$((GAP/2))" 2>/dev/null
+            ;;
+        *"Border Width"*)
+            WIDTH=$(gum choose "1" "2" "3" "4" "5")
+            hyprctl keyword general:border_size "$WIDTH" 2>/dev/null
+            ;;
+        *"Rounding"*)
+            ROUND=$(gum choose "0" "5" "8" "10" "15" "20")
+            hyprctl keyword decoration:rounding "$ROUND" 2>/dev/null
+            ;;
+        *"Animations"*)
+            gum confirm "Enable animations?" \
+                && hyprctl keyword animations:enabled 1 2>/dev/null \
+                || hyprctl keyword animations:enabled 0 2>/dev/null
+            ;;
+    esac
+    echo -e "${GOLD}✓ Applied!${RESET}"
+    gum input --placeholder "Press Enter to continue..."
+}
+
+# ─── Tools Launcher ───
+do_tools() {
+    show_header
+    echo -e "${GOLD}⟐ Developer Tools${RESET}\n"
+    
+    TOOL=$(gum choose \
+        "📊 System Monitor (btop)" \
+        "📁 File Manager (yazi)" \
+        "🔀 Git TUI (lazygit)" \
+        "🐳 Docker TUI (lazydocker)" \
+        "📝 Editor (neovim)" \
+        "🤖 AI Assistant (ollama)" \
+        "ℹ️  System Info (fastfetch)" \
+        "← Back")
+    
+    case "$TOOL" in
+        *btop*) btop ;;
+        *yazi*) yazi ;;
+        *lazygit*) lazygit ;;
+        *lazydocker*) lazydocker ;;
+        *neovim*) nvim ;;
+        *ollama*)
+            echo -e "${CYAN}Starting Ollama...${RESET}"
+            sudo systemctl start ollama 2>/dev/null
+            sleep 2
+            gum confirm "Pull qwen2.5-coder:1.5b model?" && ollama pull qwen2.5-coder:1.5b
+            echo -e "${GOLD}Run: ollama run qwen2.5-coder:1.5b${RESET}"
+            gum input --placeholder "Press Enter to continue..."
+            ;;
+        *fastfetch*) fastfetch; gum input --placeholder "Press Enter..." ;;
+    esac
+}
+
+# ─── System ───
+do_system() {
+    show_header
+    echo -e "${GOLD}⟐ System${RESET}\n"
+    
+    CHOICE=$(gum choose \
+        "👤 Change Password" \
+        "🔧 Hostname" \
+        "⏰ Timezone" \
+        "💾 Disk Usage" \
+        "🔌 Systemd Services" \
+        "← Back")
+    
+    case "$CHOICE" in
+        *"Password"*) passwd ;;
+        *"Hostname"*)
+            NEW=$(gum input --placeholder "Enter new hostname..." --value "$(hostname)")
+            [ -n "$NEW" ] && sudo hostnamectl set-hostname "$NEW" 2>/dev/null
+            echo -e "${GOLD}✓ Hostname: $NEW${RESET}"
+            ;;
+        *"Timezone"*)
+            ZONE=$(timedatectl list-timezones | gum filter --placeholder "Search timezone...")
+            [ -n "$ZONE" ] && sudo timedatectl set-timezone "$ZONE"
+            echo -e "${GOLD}✓ Timezone: $ZONE${RESET}"
+            ;;
+        *"Disk"*)
+            df -h --type=ext4 --type=btrfs --type=xfs --type=vfat 2>/dev/null || df -h
+            ;;
+        *"Services"*)
+            SVC=$(systemctl list-units --type=service --state=running --no-legend | awk '{print $1}' | gum filter --placeholder "Search service...")
+            [ -n "$SVC" ] && systemctl status "$SVC" --no-pager
+            ;;
+    esac
+    echo ""
+    gum input --placeholder "Press Enter to continue..."
+}
+
+# ─── About ───
+do_about() {
+    show_header
+    fastfetch
+    echo ""
+    echo -e "${GOLD}${BOLD}EIGHT.ONE OS · Infinity One${RESET}"
+    echo -e "${DIM}A Holy Developer Environment${RESET}"
+    echo -e "${DIM}Built on Arch Linux · Hyprland WM${RESET}"
+    echo -e "${DIM}✝ Soli Deo Gloria ✝${RESET}"
+    echo ""
+    gum input --placeholder "Press Enter to continue..."
+}
+
+# ═══ Main Menu Loop ═══
+while true; do
+    show_header
+    
+    CHOICE=$(gum choose \
+        --cursor.foreground "#d4af37" \
+        --item.foreground "#ffffff" \
+        --header.foreground "#d4af37" \
+        --header "  ✝  Holy Settings  ✝" \
+        "🔄  System OS Update (Git)" \
+        "📦  Install Software" \
+        "🖥️   Display & Monitors" \
+        "📶  Network" \
+        "⌨️   Keyboard & Language" \
+        "🎨  Appearance" \
+        "🛠️   Developer Tools" \
+        "⚙️   System" \
+        "ℹ️   About" \
+        "❌  Exit")
+    
+    case "$CHOICE" in
+        *"OS Update"*)  eightone-update ;;
+        *"Install"*)    do_install ;;
+        *"Display"*)    do_display ;;
+        *"Network"*)    do_network ;;
+        *"Keyboard"*)   do_keyboard ;;
+        *"Appearance"*) do_appearance ;;
+        *"Developer"*)  do_tools ;;
+        *"System"*)     do_system ;;
+        *"About"*)      do_about ;;
+        *"Exit"*|"")    clear; break ;;
+    esac
+done
