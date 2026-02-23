@@ -1,0 +1,15 @@
+# Build artifacts
+work/
+out/
+*.iso
+*.sha256
+
+# Temp files
+/tmp/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db

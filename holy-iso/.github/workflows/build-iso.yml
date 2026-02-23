@@ -1,0 +1,104 @@
+name: Build EIGHT.ONE OS ISO
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      release:
+        description: 'Create a GitHub Release with the ISO'
+        required: false
+        default: true
+        type: boolean
+
+# Only run one build at a time
+concurrency:
+  group: iso-build
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
+      options: --privileged
+    
+    steps:
+      - name: Install build dependencies
+        run: |
+          pacman -Syu --noconfirm
+          pacman -S --noconfirm archiso git
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Cache pacman packages
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/pacman/pkg
+          key: pacman-${{ hashFiles('packages.x86_64') }}
+          restore-keys: pacman-
+
+      - name: Build ISO
+        run: |
+          mkarchiso -v -w /tmp/archiso-work -o /tmp/archiso-out .
+
+      - name: Get ISO filename
+        id: iso
+        run: |
+          ISO_FILE=$(ls /tmp/archiso-out/*.iso)
+          ISO_NAME=$(basename "$ISO_FILE")
+          echo "path=$ISO_FILE" >> "$GITHUB_OUTPUT"
+          echo "name=$ISO_NAME" >> "$GITHUB_OUTPUT"
+          echo "date=$(date +%Y.%m.%d)" >> "$GITHUB_OUTPUT"
+          # Generate SHA256 checksum
+          sha256sum "$ISO_FILE" > "/tmp/archiso-out/${ISO_NAME}.sha256"
+
+      - name: Upload ISO as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.iso.outputs.name }}
+          path: |
+            ${{ steps.iso.outputs.path }}
+            /tmp/archiso-out/*.sha256
+          retention-days: 7
+
+      - name: Create Release
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.release == 'true')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.iso.outputs.date }}
+          name: "EIGHT.ONE OS — ${{ steps.iso.outputs.date }}"
+          body: |
+            ## EIGHT.ONE OS — Infinity One
+            
+            **Build Date:** ${{ steps.iso.outputs.date }}
+            **Commit:** ${{ github.sha }}
+            
+            ### What's included
+            - Hyprland Wayland compositor with gold/black premium theme
+            - 19 `holy-*` TUI tools (AI, WiFi, Bluetooth, SSH, Flow Timer, etc.)
+            - Full developer toolkit (Neovim IDE, Git delta, Zellij, Docker, Lazygit)
+            - Unified dark theming across GTK/QT/Kitty/Fuzzel
+            - Local AI via Ollama
+            
+            ### Quick Start
+            ```bash
+            # UEFI boot (recommended)
+            qemu-system-x86_64 -m 4G -bios /usr/share/ovmf/OVMF.fd -cdrom eight-one-os-*.iso
+            
+            # Or write to USB
+            sudo dd if=eight-one-os-*.iso of=/dev/sdX bs=4M status=progress
+            ```
+            
+            ### Verify
+            ```bash
+            sha256sum -c eight-one-os-*.sha256
+            ```
+          files: |
+            ${{ steps.iso.outputs.path }}
+            /tmp/archiso-out/*.sha256
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
