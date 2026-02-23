@@ -16,8 +16,11 @@
         "clock"
     ],
     "modules-right": [
+        "custom/recording",
         "custom/sabbath",
         "pulseaudio",
+        "backlight",
+        "bluetooth",
         "network",
         "cpu",
         "memory",
@@ -44,7 +47,8 @@
         "max-length": 50,
         "rewrite": {
             "(.*) — Alacritty": "  $1",
-            "(.*) — Neovim": "  $1"
+            "(.*) — Neovim": "  $1",
+            "(.*) — kitty": "  $1"
         }
     },
     "clock": {
@@ -103,7 +107,26 @@
         "format-ethernet": "󰈀 {ipaddr}",
         "format-linked": "󰈀 {ifname}",
         "format-disconnected": "󰤭 Offline",
-        "tooltip-format": "{ifname}: {ipaddr}/{cidr}\n⬆️ {bandwidthUpBytes} ⬇️ {bandwidthDownBytes}"
+        "tooltip-format": "{ifname}: {ipaddr}/{cidr}",
+        "on-click": "kitty --title 'Holy WiFi' /usr/local/bin/holy-wifi"
+    },
+    "bluetooth": {
+        "format": "󰂯 {status}",
+        "format-connected": "󰂱 {device_alias}",
+        "format-disabled": "󰂲",
+        "tooltip-format": "{controller_alias}\n{num_connections} connected",
+        "on-click": "kitty --title 'Holy Bluetooth' /usr/local/bin/holy-bluetooth"
+    },
+    "backlight": {
+        "format": "󰃟 {percent}%",
+        "on-scroll-up": "brightnessctl set +5%",
+        "on-scroll-down": "brightnessctl set 5%-"
+    },
+    "custom/recording": {
+        "exec": "if pgrep -x wf-recorder > /dev/null; then echo '{\"text\": \"REC\", \"class\": \"recording\"}'; else echo '{}'; fi",
+        "return-type": "json",
+        "interval": 2,
+        "on-click": "holy-record toggle"
     },
     "battery": {
         "format": "{icon} {capacity}%",

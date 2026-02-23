@@ -143,6 +143,49 @@ tooltip {
     margin: 4px 4px;
 }
 
+#bluetooth {
+    color: #3498db;
+    padding: 0 10px;
+    margin: 4px 2px;
+    border-radius: 12px;
+    background: rgba(52, 152, 219, 0.08);
+}
+
+#bluetooth.disabled {
+    color: #595959;
+    background: transparent;
+}
+
+#backlight {
+    color: #f39c12;
+    padding: 0 10px;
+    margin: 4px 2px;
+    border-radius: 12px;
+    background: rgba(243, 156, 18, 0.08);
+}
+
+#custom-recording {
+    color: #e74c3c;
+    font-weight: bold;
+    padding: 0 12px;
+    margin: 4px 2px;
+    border-radius: 12px;
+    background: rgba(231, 76, 60, 0.15);
+    animation: blink 1s infinite;
+}
+
+#custom-flow {
+    color: #d4af37;
+    padding: 0 10px;
+    margin: 4px 2px;
+}
+
+#custom-intent {
+    color: #8a8a8a;
+    font-style: italic;
+    padding: 0 10px;
+}
+
 @keyframes blink {
     50% {
         opacity: 0.5;
