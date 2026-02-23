@@ -1,0 +1,129 @@
+#!/usr/bin/env bash
+# EIGHT.ONE OS — WiFi Manager
+# Interactive network management TUI
+
+set -euo pipefail
+
+GOLD='\e[33m'
+CYAN='\e[36m'
+GREEN='\e[32m'
+RED='\e[31m'
+DIM='\e[2m'
+RESET='\e[0m'
+BOLD='\e[1m'
+
+header() {
+    echo -e "${GOLD}${BOLD}╔══════════════════════════════════════╗${RESET}"
+    echo -e "${GOLD}${BOLD}║     holy-wifi — Network Manager      ║${RESET}"
+    echo -e "${GOLD}${BOLD}╚══════════════════════════════════════╝${RESET}"
+}
+
+show_status() {
+    echo -e "\n${CYAN}Current Connection:${RESET}"
+    local ssid
+    ssid="$(nmcli -t -f active,ssid dev wifi | grep '^yes' | cut -d: -f2 2>/dev/null)" || true
+
+    if [ -n "$ssid" ]; then
+        echo -e "  ${GREEN}●${RESET} Connected to ${BOLD}${ssid}${RESET}"
+        local ip
+        ip="$(nmcli -t -f IP4.ADDRESS dev show 2>/dev/null | grep -m1 IP4 | cut -d: -f2)" || true
+        [ -n "$ip" ] && echo -e "  ${DIM}IP: ${ip}${RESET}"
+    else
+        echo -e "  ${RED}●${RESET} Not connected"
+    fi
+}
+
+scan_networks() {
+    echo -e "\n${CYAN}Scanning for networks...${RESET}\n"
+    nmcli dev wifi rescan 2>/dev/null || true
+    sleep 1
+
+    local networks
+    networks="$(nmcli -t -f SSID,SIGNAL,SECURITY dev wifi list | sort -t: -k2 -rn | head -20)"
+
+    if [ -z "$networks" ]; then
+        echo -e "${RED}No networks found.${RESET}"
+        return
+    fi
+
+    echo -e "${BOLD}  Signal  Security         SSID${RESET}"
+    echo -e "${DIM}  ──────  ──────────────── ────────────────${RESET}"
+
+    while IFS=: read -r ssid signal security; do
+        [ -z "$ssid" ] && continue
+        local bar color
+        if [ "$signal" -ge 80 ]; then color="${GREEN}"; bar="████"
+        elif [ "$signal" -ge 60 ]; then color="${CYAN}"; bar="███░"
+        elif [ "$signal" -ge 40 ]; then color="${GOLD}"; bar="██░░"
+        else color="${RED}"; bar="█░░░"
+        fi
+        printf "  ${color}%s %3s%%${RESET}  %-16s %s\n" "$bar" "$signal" "${security:---open--}" "$ssid"
+    done <<< "$networks"
+}
+
+connect_network() {
+    nmcli dev wifi rescan 2>/dev/null || true
+    sleep 1
+
+    local ssid
+    ssid="$(nmcli -t -f SSID dev wifi list | sort -u | grep -v '^$' | gum filter --prompt='Select network: ')" || return 0
+
+    if [ -z "$ssid" ]; then
+        echo -e "${RED}No network selected.${RESET}"
+        return
+    fi
+
+    # Check if known network
+    if nmcli connection show "$ssid" &>/dev/null; then
+        echo -e "${CYAN}Connecting to known network ${BOLD}${ssid}${RESET}..."
+        nmcli connection up "$ssid" && echo -e "${GREEN}✓ Connected!${RESET}"
+    else
+        echo -e "${CYAN}Connecting to ${BOLD}${ssid}${RESET}..."
+        local password
+        password="$(gum input --password --placeholder 'Enter password (empty for open)')" || return 0
+
+        if [ -n "$password" ]; then
+            nmcli dev wifi connect "$ssid" password "$password" && echo -e "${GREEN}✓ Connected!${RESET}"
+        else
+            nmcli dev wifi connect "$ssid" && echo -e "${GREEN}✓ Connected!${RESET}"
+        fi
+    fi
+}
+
+disconnect_network() {
+    nmcli dev disconnect wlan0 2>/dev/null || nmcli dev disconnect wlp0s20f3 2>/dev/null || true
+    echo -e "${GOLD}✓ Disconnected.${RESET}"
+}
+
+forget_network() {
+    local connections
+    connections="$(nmcli -t -f NAME connection show | gum filter --prompt='Forget network: ')" || return 0
+    [ -z "$connections" ] && return
+    nmcli connection delete "$connections"
+    echo -e "${GOLD}✓ Forgot '${connections}'.${RESET}"
+}
+
+show_help() {
+    echo -e "${GOLD}holy-wifi${RESET} — Network Manager"
+    echo ""
+    echo "Usage: holy-wifi [command]"
+    echo ""
+    echo "Commands:"
+    echo "  status     Show current connection"
+    echo "  scan       Scan for available networks"
+    echo "  connect    Connect to a network (interactive)"
+    echo "  disconnect Disconnect from current network"
+    echo "  forget     Forget a saved network"
+    echo ""
+}
+
+header
+
+case "${1:-status}" in
+    status|s)      show_status ;;
+    scan)          scan_networks ;;
+    connect|c)     connect_network ;;
+    disconnect|d)  disconnect_network ;;
+    forget|f)      forget_network ;;
+    *)             show_help ;;
+esac

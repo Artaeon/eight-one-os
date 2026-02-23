@@ -37,4 +37,10 @@ file_permissions=(
   ["/usr/local/bin/holy-intent"]="0:0:755"
   ["/usr/local/bin/holy-dash"]="0:0:755"
   ["/usr/local/bin/holy-dev"]="0:0:755"
+  ["/usr/local/bin/holy-record"]="0:0:755"
+  ["/usr/local/bin/holy-clip"]="0:0:755"
+  ["/usr/local/bin/holy-ssh"]="0:0:755"
+  ["/usr/local/bin/holy-wifi"]="0:0:755"
+  ["/usr/local/bin/holy-bluetooth"]="0:0:755"
+  ["/usr/local/bin/holy-display"]="0:0:755"
 )

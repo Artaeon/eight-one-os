@@ -36,6 +36,13 @@ alias ll='eza -la --icons --group-directories-first'
 alias cat='bat --style=plain'
 alias top='btop'
 alias find='fd'
+alias lg='lazygit'
+alias ldk='lazydocker'
+alias g='git'
+alias gs='git s'
+alias gc='git commit'
+alias gp='git push'
+alias gl='git lg'
 # Ensure user is ready
 if [ -z "$DISPLAY" ] && [ -z "$WAYLAND_DISPLAY" ] && [ "$XDG_VTNR" = 1 ]; then
     if [ ! -f "$HOME/.welcome_done" ]; then
@@ -60,6 +67,9 @@ fi
 # Zsh Plugins (Arch Linux packages)
 source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh 2>/dev/null
 source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh 2>/dev/null
+
+# Zoxide (smart cd)
+eval "$(zoxide init zsh)" 2>/dev/null
 
 # Builder's daily intention (only in Hyprland session)
 if [ -n "$WAYLAND_DISPLAY" ]; then

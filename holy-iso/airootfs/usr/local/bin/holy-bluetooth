@@ -1,0 +1,166 @@
+#!/usr/bin/env bash
+# EIGHT.ONE OS — Bluetooth Manager
+# Interactive Bluetooth management TUI
+
+set -euo pipefail
+
+GOLD='\e[33m'
+CYAN='\e[36m'
+GREEN='\e[32m'
+RED='\e[31m'
+DIM='\e[2m'
+RESET='\e[0m'
+BOLD='\e[1m'
+
+header() {
+    echo -e "${GOLD}${BOLD}╔══════════════════════════════════════╗${RESET}"
+    echo -e "${GOLD}${BOLD}║   holy-bluetooth — BT Manager        ║${RESET}"
+    echo -e "${GOLD}${BOLD}╚══════════════════════════════════════╝${RESET}"
+}
+
+ensure_bluetooth() {
+    if ! systemctl is-active bluetooth &>/dev/null; then
+        echo -e "${CYAN}Starting Bluetooth service...${RESET}"
+        sudo systemctl start bluetooth
+    fi
+}
+
+power_on() {
+    bluetoothctl power on &>/dev/null
+    echo -e "${GREEN}✓ Bluetooth powered on.${RESET}"
+}
+
+power_off() {
+    bluetoothctl power off &>/dev/null
+    echo -e "${GOLD}✓ Bluetooth powered off.${RESET}"
+}
+
+show_status() {
+    ensure_bluetooth
+
+    echo -e "\n${CYAN}Bluetooth Status:${RESET}"
+    local powered
+    powered="$(bluetoothctl show 2>/dev/null | grep 'Powered:' | awk '{print $2}')" || true
+
+    if [ "$powered" = "yes" ]; then
+        echo -e "  ${GREEN}●${RESET} Powered ${GREEN}ON${RESET}"
+    else
+        echo -e "  ${RED}●${RESET} Powered ${RED}OFF${RESET}"
+        return
+    fi
+
+    echo -e "\n${CYAN}Connected Devices:${RESET}"
+    local connected
+    connected="$(bluetoothctl devices Connected 2>/dev/null)" || true
+
+    if [ -n "$connected" ]; then
+        echo "$connected" | while read -r _ mac name; do
+            echo -e "  ${GREEN}●${RESET} ${BOLD}${name}${RESET} ${DIM}(${mac})${RESET}"
+        done
+    else
+        echo -e "  ${DIM}No devices connected.${RESET}"
+    fi
+}
+
+scan_devices() {
+    ensure_bluetooth
+    power_on
+
+    echo -e "\n${CYAN}Scanning for devices (10s)...${RESET}"
+
+    # Start scan in background
+    bluetoothctl --timeout 10 scan on &>/dev/null &
+    local scan_pid=$!
+    sleep 10
+    kill "$scan_pid" 2>/dev/null || true
+
+    echo -e "\n${BOLD}  Available Devices:${RESET}"
+    echo -e "${DIM}  ─────────────────────────────────────${RESET}"
+
+    bluetoothctl devices 2>/dev/null | while read -r _ mac name; do
+        echo -e "  ${CYAN}●${RESET} ${name} ${DIM}(${mac})${RESET}"
+    done
+}
+
+connect_device() {
+    ensure_bluetooth
+    power_on
+
+    local devices
+    devices="$(bluetoothctl devices 2>/dev/null | awk '{$1=$2=""; print substr($0,3)}')"
+
+    if [ -z "$devices" ]; then
+        echo -e "${RED}No devices found. Run 'holy-bluetooth scan' first.${RESET}"
+        return 1
+    fi
+
+    local selected
+    selected="$(echo "$devices" | gum filter --prompt='Connect to: ')" || return 0
+    [ -z "$selected" ] && return
+
+    local mac
+    mac="$(bluetoothctl devices 2>/dev/null | grep "$selected" | awk '{print $2}')"
+
+    if [ -z "$mac" ]; then
+        echo -e "${RED}Device not found.${RESET}"
+        return 1
+    fi
+
+    echo -e "${CYAN}Pairing with ${BOLD}${selected}${RESET}..."
+    bluetoothctl pair "$mac" 2>/dev/null || true
+    bluetoothctl trust "$mac" 2>/dev/null || true
+
+    echo -e "${CYAN}Connecting to ${BOLD}${selected}${RESET}..."
+    if bluetoothctl connect "$mac" 2>/dev/null; then
+        echo -e "${GREEN}✓ Connected to ${selected}!${RESET}"
+    else
+        echo -e "${RED}✗ Connection failed. Try again.${RESET}"
+    fi
+}
+
+disconnect_device() {
+    local connected
+    connected="$(bluetoothctl devices Connected 2>/dev/null | awk '{$1=$2=""; print substr($0,3)}')"
+
+    if [ -z "$connected" ]; then
+        echo -e "${DIM}No devices connected.${RESET}"
+        return
+    fi
+
+    local selected
+    selected="$(echo "$connected" | gum filter --prompt='Disconnect: ')" || return 0
+    [ -z "$selected" ] && return
+
+    local mac
+    mac="$(bluetoothctl devices Connected 2>/dev/null | grep "$selected" | awk '{print $2}')"
+
+    bluetoothctl disconnect "$mac" 2>/dev/null
+    echo -e "${GOLD}✓ Disconnected from ${selected}.${RESET}"
+}
+
+show_help() {
+    echo -e "${GOLD}holy-bluetooth${RESET} — Bluetooth Manager"
+    echo ""
+    echo "Usage: holy-bluetooth [command]"
+    echo ""
+    echo "Commands:"
+    echo "  status       Show Bluetooth status and connected devices"
+    echo "  scan         Scan for nearby devices"
+    echo "  connect      Connect to a device (interactive)"
+    echo "  disconnect   Disconnect a device"
+    echo "  on           Power on Bluetooth"
+    echo "  off          Power off Bluetooth"
+    echo ""
+}
+
+header
+
+case "${1:-status}" in
+    status|s)      show_status ;;
+    scan)          scan_devices ;;
+    connect|c)     connect_device ;;
+    disconnect|d)  disconnect_device ;;
+    on)            power_on ;;
+    off)           power_off ;;
+    *)             show_help ;;
+esac

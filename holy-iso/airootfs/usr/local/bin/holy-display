@@ -1,0 +1,138 @@
+#!/usr/bin/env bash
+# EIGHT.ONE OS — Display Manager
+# Interactive monitor configuration TUI using wlr-randr
+
+set -euo pipefail
+
+GOLD='\e[33m'
+CYAN='\e[36m'
+GREEN='\e[32m'
+RED='\e[31m'
+DIM='\e[2m'
+RESET='\e[0m'
+BOLD='\e[1m'
+
+header() {
+    echo -e "${GOLD}${BOLD}╔══════════════════════════════════════╗${RESET}"
+    echo -e "${GOLD}${BOLD}║   holy-display — Monitor Manager     ║${RESET}"
+    echo -e "${GOLD}${BOLD}╚══════════════════════════════════════╝${RESET}"
+}
+
+show_status() {
+    echo -e "\n${CYAN}Connected Displays:${RESET}\n"
+
+    wlr-randr 2>/dev/null | while IFS= read -r line; do
+        if echo "$line" | grep -qE '^[A-Z]'; then
+            local name enabled
+            name="$(echo "$line" | awk '{print $1}')"
+            echo -e "  ${GREEN}●${RESET} ${BOLD}${name}${RESET}"
+        elif echo "$line" | grep -q 'current'; then
+            local res
+            res="$(echo "$line" | awk '{print $1}')"
+            echo -e "    ${DIM}Resolution: ${res}${RESET}"
+        elif echo "$line" | grep -q 'Position'; then
+            local pos
+            pos="$(echo "$line" | awk '{print $2}')"
+            echo -e "    ${DIM}Position: ${pos}${RESET}"
+        elif echo "$line" | grep -q 'Transform'; then
+            local transform
+            transform="$(echo "$line" | awk '{print $2}')"
+            echo -e "    ${DIM}Transform: ${transform}${RESET}"
+        elif echo "$line" | grep -q 'Scale'; then
+            local scale
+            scale="$(echo "$line" | awk '{print $2}')"
+            echo -e "    ${DIM}Scale: ${scale}${RESET}"
+        fi
+    done
+}
+
+set_resolution() {
+    local outputs
+    outputs="$(wlr-randr 2>/dev/null | grep -E '^[A-Z]' | awk '{print $1}')"
+
+    if [ -z "$outputs" ]; then
+        echo -e "${RED}No displays found.${RESET}"
+        return 1
+    fi
+
+    local output
+    output="$(echo "$outputs" | gum filter --prompt='Select display: ')" || return 0
+    [ -z "$output" ] && return
+
+    local modes
+    modes="$(wlr-randr 2>/dev/null | awk -v out="$output" '
+        $0 ~ out {found=1; next}
+        found && /^[A-Z]/ {found=0}
+        found && /px/ {gsub(/^ +/, ""); print $1}
+    ' | sort -t'x' -k1 -rn | uniq)"
+
+    if [ -z "$modes" ]; then
+        echo -e "${RED}No modes found for ${output}.${RESET}"
+        return 1
+    fi
+
+    local mode
+    mode="$(echo "$modes" | gum filter --prompt='Select resolution: ')" || return 0
+    [ -z "$mode" ] && return
+
+    wlr-randr --output "$output" --mode "$mode"
+    echo -e "${GREEN}✓ Set ${output} to ${mode}.${RESET}"
+}
+
+set_scale() {
+    local outputs
+    outputs="$(wlr-randr 2>/dev/null | grep -E '^[A-Z]' | awk '{print $1}')"
+
+    local output
+    output="$(echo "$outputs" | gum filter --prompt='Select display: ')" || return 0
+    [ -z "$output" ] && return
+
+    local scale
+    scale="$(echo -e '1\n1.25\n1.5\n1.75\n2\n2.5\n3' | gum filter --prompt='Select scale: ')" || return 0
+
+    wlr-randr --output "$output" --scale "$scale"
+    echo -e "${GREEN}✓ Set ${output} scale to ${scale}.${RESET}"
+}
+
+toggle_output() {
+    local outputs
+    outputs="$(wlr-randr 2>/dev/null | grep -E '^[A-Z]' | awk '{print $1}')"
+
+    local output
+    output="$(echo "$outputs" | gum filter --prompt='Toggle display: ')" || return 0
+    [ -z "$output" ] && return
+
+    local action
+    action="$(echo -e 'enable\ndisable' | gum filter --prompt='Action: ')" || return 0
+
+    if [ "$action" = "enable" ]; then
+        wlr-randr --output "$output" --on
+        echo -e "${GREEN}✓ Enabled ${output}.${RESET}"
+    else
+        wlr-randr --output "$output" --off
+        echo -e "${GOLD}✓ Disabled ${output}.${RESET}"
+    fi
+}
+
+show_help() {
+    echo -e "${GOLD}holy-display${RESET} — Monitor Manager"
+    echo ""
+    echo "Usage: holy-display [command]"
+    echo ""
+    echo "Commands:"
+    echo "  status       Show connected displays"
+    echo "  resolution   Change display resolution"
+    echo "  scale        Change display scale"
+    echo "  toggle       Enable/disable a display"
+    echo ""
+}
+
+header
+
+case "${1:-status}" in
+    status|s)      show_status ;;
+    resolution|r)  set_resolution ;;
+    scale)         set_scale ;;
+    toggle|t)      toggle_output ;;
+    *)             show_help ;;
+esac
