@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# EIGHT.ONE OS — AUR Helper Bootstrap
+# Installs paru on first run, then passes through to it
+
+set -euo pipefail
+
+PARU_BIN="/usr/bin/paru"
+
+if [ -x "$PARU_BIN" ]; then
+    exec paru "$@"
+fi
+
+echo -e "\e[33m\e[1m[EIGHT.ONE] Installing paru AUR helper...\e[0m"
+echo ""
+
+# Build dependencies are already installed (base-devel, git)
+TMPDIR="$(mktemp -d)"
+trap 'rm -rf "$TMPDIR"' EXIT
+
+cd "$TMPDIR"
+git clone --depth 1 https://aur.archlinux.org/paru-bin.git .
+makepkg -si --noconfirm
+
+echo ""
+echo -e "\e[32m✓ paru installed successfully!\e[0m"
+echo -e "\e[36mUsage: paru <package>  (or just: holy-aur <package>)\e[0m"
+echo ""
+
+# Run with original args if any were provided
+if [ $# -gt 0 ]; then
+    exec paru "$@"
+fi
