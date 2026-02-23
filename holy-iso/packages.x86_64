@@ -207,3 +207,9 @@ wlr-randr
 git-delta
 greetd
 hypridle
+pipewire
+wireplumber
+pipewire-audio
+pipewire-pulse
+pipewire-alsa
+brightnessctl
