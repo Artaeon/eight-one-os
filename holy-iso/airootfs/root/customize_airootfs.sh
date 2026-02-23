@@ -19,7 +19,8 @@ systemctl enable systemd-networkd systemd-resolved
 systemctl enable NetworkManager
 systemctl enable bluetooth
 systemctl enable ollama
-systemctl set-default multi-user.target
+systemctl enable greetd
+systemctl set-default graphical.target
 
 # Set Plymouth theme
 plymouth-set-default-theme eightone
