@@ -1,0 +1,16 @@
+[Default Applications]
+text/html=kitty-open.desktop
+x-scheme-handler/http=kitty-open.desktop
+x-scheme-handler/https=kitty-open.desktop
+x-scheme-handler/about=kitty-open.desktop
+x-scheme-handler/unknown=kitty-open.desktop
+inode/directory=yazi.desktop
+text/plain=nvim.desktop
+application/pdf=org.pwmt.zathura.desktop
+image/png=imv.desktop
+image/jpeg=imv.desktop
+image/gif=imv.desktop
+video/mp4=mpv.desktop
+video/x-matroska=mpv.desktop
+audio/mpeg=mpv.desktop
+audio/flac=mpv.desktop
