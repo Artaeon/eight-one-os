@@ -116,41 +116,30 @@ do_display() {
 # ─── Network ───
 do_network() {
     show_header
-    echo -e "${GOLD}⟐ Network Settings${RESET}\n"
+    echo -e "${GOLD}⟐ Network & Connectivity${RESET}\n"
     
     CHOICE=$(gum choose \
-        "📶 WiFi (iwctl)" \
-        "🔌 Wired Status" \
+        "📶 WiFi Manager" \
+        "🔵 Bluetooth Manager" \
+        "🖥️  Display Manager" \
         "🌐 IP Address" \
         "🔍 DNS Test" \
         "← Back")
     
     case "$CHOICE" in
-        *"WiFi"*)
-            if command -v iwctl &>/dev/null; then
-                iwctl station wlan0 scan 2>/dev/null
-                sleep 2
-                echo -e "${CYAN}Available networks:${RESET}"
-                iwctl station wlan0 get-networks 2>/dev/null
-                SSID=$(gum input --placeholder "Enter WiFi SSID to connect...")
-                [ -n "$SSID" ] && iwctl station wlan0 connect "$SSID"
-            else
-                echo "iwctl not available"
-            fi
-            ;;
-        *"Wired"*)
-            ip link show | grep -E "^[0-9]|state"
-            ;;
+        *"WiFi"*)       holy-wifi ;;
+        *"Bluetooth"*)  holy-bluetooth ;;
+        *"Display"*)    holy-display ;;
         *"IP Address"*)
             ip -c addr show | grep -E "inet |link/"
+            gum input --placeholder "Press Enter to continue..."
             ;;
         *"DNS"*)
             echo -e "${CYAN}Testing DNS resolution...${RESET}"
             ping -c 3 archlinux.org 2>/dev/null || echo "No network connection"
+            gum input --placeholder "Press Enter to continue..."
             ;;
     esac
-    echo ""
-    gum input --placeholder "Press Enter to continue..."
 }
 
 # ─── Keyboard & Language ───
@@ -232,6 +221,9 @@ do_tools() {
         "🐳 Docker TUI (lazydocker)" \
         "📝 Editor (neovim)" \
         "🤖 AI Assistant (ollama)" \
+        "🔑 SSH Key Manager" \
+        "📋 Clipboard Manager" \
+        "🎬 Screen Recorder" \
         "ℹ️  System Info (fastfetch)" \
         "← Back")
     
@@ -241,6 +233,9 @@ do_tools() {
         *lazygit*) lazygit ;;
         *lazydocker*) lazydocker ;;
         *neovim*) nvim ;;
+        *"SSH Key"*) holy-ssh ;;
+        *"Clipboard"*) holy-clip ;;
+        *"Screen Recorder"*) holy-record ;;
         *ollama*)
             echo -e "${CYAN}Starting Ollama...${RESET}"
             sudo systemctl start ollama 2>/dev/null
@@ -315,7 +310,7 @@ while true; do
         "🔄  System OS Update (Git)" \
         "📦  Install Software" \
         "🖥️   Display & Monitors" \
-        "📶  Network" \
+        "📶  Network & Connectivity" \
         "⌨️   Keyboard & Language" \
         "🎨  Appearance" \
         "🛠️   Developer Tools" \
