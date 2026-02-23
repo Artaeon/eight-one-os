@@ -1,0 +1,55 @@
+// EIGHT.ONE OS — Zellij Configuration
+
+keybinds clear-defaults=true {
+    normal {
+        bind "Alt h" { MoveFocusOrTab "Left"; }
+        bind "Alt l" { MoveFocusOrTab "Right"; }
+        bind "Alt j" { MoveFocus "Down"; }
+        bind "Alt k" { MoveFocus "Up"; }
+        bind "Alt n" { NewPane; }
+        bind "Alt d" { NewPane "Down"; }
+        bind "Alt r" { NewPane "Right"; }
+        bind "Alt w" { CloseFocus; }
+        bind "Alt t" { NewTab; }
+        bind "Alt 1" { GoToTab 1; }
+        bind "Alt 2" { GoToTab 2; }
+        bind "Alt 3" { GoToTab 3; }
+        bind "Alt 4" { GoToTab 4; }
+        bind "Alt 5" { GoToTab 5; }
+        bind "Alt f" { ToggleFocusFullscreen; }
+        bind "Alt [" { GoToPreviousTab; }
+        bind "Alt ]" { GoToNextTab; }
+        bind "Alt s" { ToggleFloatingPanes; }
+        bind "Ctrl q" { Quit; }
+    }
+    locked {
+        bind "Alt g" { SwitchToMode "Normal"; }
+    }
+}
+
+theme "eightone"
+
+themes {
+    eightone {
+        fg "#e8e6df"
+        bg "#0a0a0f"
+        black "#1a1a2e"
+        red "#e74c3c"
+        green "#2ecc71"
+        yellow "#d4af37"
+        blue "#3498db"
+        magenta "#9b59b6"
+        cyan "#1abc9c"
+        white "#e8e6df"
+        orange "#f39c12"
+    }
+}
+
+pane_frames false
+default_shell "zsh"
+default_layout "compact"
+mouse_mode true
+scroll_buffer_size 10000
+copy_on_select true
+scrollback_editor "/usr/bin/nvim"
+session_serialization true

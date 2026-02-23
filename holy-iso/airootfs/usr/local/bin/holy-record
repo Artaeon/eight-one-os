@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+# EIGHT.ONE OS — Screen Recorder
+# Toggle-based screen recording using wf-recorder
+
+set -euo pipefail
+
+RECORD_PID_FILE="/tmp/holy-record.pid"
+OUTPUT_DIR="$HOME/Videos"
+GOLD='\e[33m'
+RESET='\e[0m'
+
+show_help() {
+    echo -e "${GOLD}holy-record${RESET} — Screen Recording"
+    echo ""
+    echo "Usage: holy-record [command]"
+    echo ""
+    echo "Commands:"
+    echo "  start    Start recording (select area)"
+    echo "  full     Start recording (full screen)"
+    echo "  stop     Stop current recording"
+    echo "  toggle   Toggle recording on/off"
+    echo "  status   Check if recording"
+    echo ""
+}
+
+ensure_output_dir() {
+    mkdir -p "$OUTPUT_DIR"
+}
+
+generate_filename() {
+    echo "$OUTPUT_DIR/recording-$(date +%Y%m%d-%H%M%S).mp4"
+}
+
+start_recording() {
+    local mode="${1:-area}"
+
+    if is_recording; then
+        notify-send "holy-record" "Already recording! Use 'holy-record stop' to stop."
+        return 1
+    fi
+
+    ensure_output_dir
+    local filename
+    filename="$(generate_filename)"
+
+    if [ "$mode" = "full" ]; then
+        wf-recorder -f "$filename" &
+    else
+        local geometry
+        geometry="$(slurp 2>/dev/null)" || { notify-send "holy-record" "Selection cancelled."; return 1; }
+        wf-recorder -g "$geometry" -f "$filename" &
+    fi
+
+    echo $! > "$RECORD_PID_FILE"
+    notify-send "🔴 Recording" "Saving to ${filename##*/}"
+}
+
+stop_recording() {
+    if ! is_recording; then
+        notify-send "holy-record" "Not currently recording."
+        return 1
+    fi
+
+    local pid
+    pid="$(cat "$RECORD_PID_FILE")"
+    kill -SIGINT "$pid" 2>/dev/null
+    rm -f "$RECORD_PID_FILE"
+    notify-send "⏹ Recording Saved" "Check ~/Videos/"
+}
+
+is_recording() {
+    [ -f "$RECORD_PID_FILE" ] && kill -0 "$(cat "$RECORD_PID_FILE")" 2>/dev/null
+}
+
+toggle_recording() {
+    if is_recording; then
+        stop_recording
+    else
+        start_recording "area"
+    fi
+}
+
+show_status() {
+    if is_recording; then
+        echo "🔴 Recording in progress (PID: $(cat "$RECORD_PID_FILE"))"
+    else
+        echo "⏹ Not recording"
+    fi
+}
+
+case "${1:-help}" in
+    start)  start_recording "area" ;;
+    full)   start_recording "full" ;;
+    stop)   stop_recording ;;
+    toggle) toggle_recording ;;
+    status) show_status ;;
+    *)      show_help ;;
+esac

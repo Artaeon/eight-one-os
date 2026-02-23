@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+# EIGHT.ONE OS — Clipboard Manager
+# Wrapper around cliphist for clipboard history management
+
+set -euo pipefail
+
+GOLD='\e[33m'
+CYAN='\e[36m'
+RESET='\e[0m'
+
+show_help() {
+    echo -e "${GOLD}holy-clip${RESET} — Clipboard Manager"
+    echo ""
+    echo "Usage: holy-clip [command]"
+    echo ""
+    echo "Commands:"
+    echo "  list     Browse clipboard history (fuzzel)"
+    echo "  clear    Clear all clipboard history"
+    echo "  wipe     Delete a specific entry"
+    echo "  count    Show number of stored entries"
+    echo ""
+}
+
+clip_list() {
+    local selected
+    selected="$(cliphist list | fuzzel --dmenu --prompt='📋 ' 2>/dev/null)" || return 0
+    echo "$selected" | cliphist decode | wl-copy
+    notify-send "📋 Clipboard" "Pasted from history"
+}
+
+clip_clear() {
+    cliphist wipe
+    notify-send "📋 Clipboard" "History cleared"
+    echo -e "${GOLD}✓${RESET} Clipboard history cleared."
+}
+
+clip_wipe_entry() {
+    local selected
+    selected="$(cliphist list | fuzzel --dmenu --prompt='🗑 Delete: ' 2>/dev/null)" || return 0
+    echo "$selected" | cliphist delete
+    notify-send "📋 Clipboard" "Entry removed"
+}
+
+clip_count() {
+    local count
+    count="$(cliphist list | wc -l)"
+    echo -e "${CYAN}📋 Clipboard entries:${RESET} $count"
+}
+
+case "${1:-list}" in
+    list)   clip_list ;;
+    clear)  clip_clear ;;
+    wipe)   clip_wipe_entry ;;
+    count)  clip_count ;;
+    *)      show_help ;;
+esac

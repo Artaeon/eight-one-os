@@ -1,0 +1,102 @@
+# EIGHT.ONE OS — Yazi Theme (Dark Gold)
+
+[manager]
+cwd = { fg = "#d4af37" }
+
+hovered = { fg = "#0a0a0f", bg = "#d4af37" }
+preview_hovered = { underline = true }
+
+find_keyword = { fg = "#f1c40f", italic = true }
+find_position = { fg = "#d4af37", bg = "reset", italic = true }
+
+marker_selected = { fg = "#2ecc71", bg = "#2ecc71" }
+marker_copied   = { fg = "#f1c40f", bg = "#f1c40f" }
+marker_cut      = { fg = "#e74c3c", bg = "#e74c3c" }
+
+tab_active   = { fg = "#0a0a0f", bg = "#d4af37" }
+tab_inactive = { fg = "#e8e6df", bg = "#1a1a2e" }
+tab_width    = 1
+
+border_symbol = "│"
+border_style  = { fg = "#2d2d44" }
+
+[status]
+separator_open  = ""
+separator_close = ""
+separator_style = { fg = "#1a1a2e", bg = "#1a1a2e" }
+
+mode_normal = { fg = "#0a0a0f", bg = "#d4af37", bold = true }
+mode_select = { fg = "#0a0a0f", bg = "#2ecc71", bold = true }
+mode_unset  = { fg = "#0a0a0f", bg = "#9b59b6", bold = true }
+
+progress_label  = { fg = "#e8e6df", bold = true }
+progress_normal = { fg = "#3498db", bg = "#1a1a2e" }
+progress_error  = { fg = "#e74c3c", bg = "#1a1a2e" }
+
+permissions_t = { fg = "#d4af37" }
+permissions_r = { fg = "#2ecc71" }
+permissions_w = { fg = "#e74c3c" }
+permissions_x = { fg = "#f1c40f" }
+permissions_s = { fg = "#9b59b6" }
+
+[input]
+border   = { fg = "#d4af37" }
+title    = {}
+value    = {}
+selected = { reversed = true }
+
+[select]
+border   = { fg = "#d4af37" }
+active   = { fg = "#d4af37" }
+inactive = {}
+
+[completion]
+border   = { fg = "#d4af37" }
+active   = { bg = "#d4af3733" }
+inactive = {}
+
+icon_file    = ""
+icon_folder  = ""
+icon_command  = ""
+
+[tasks]
+border  = { fg = "#d4af37" }
+title   = {}
+hovered = { underline = true }
+
+[which]
+cols = 3
+mask            = { bg = "#1a1a2e" }
+cand            = { fg = "#1abc9c" }
+rest            = { fg = "#2d2d44" }
+desc            = { fg = "#d4af37" }
+separator       = "  "
+separator_style = { fg = "#2d2d44" }
+
+[help]
+on      = { fg = "#d4af37" }
+run     = { fg = "#1abc9c" }
+desc    = { fg = "#e8e6df" }
+hovered = { bg = "#d4af3733", bold = true }
+footer  = { fg = "#e8e6df", bg = "#1a1a2e" }
+
+[filetype]
+rules = [
+    # Media
+    { mime = "image/*", fg = "#9b59b6" },
+    { mime = "video/*", fg = "#f1c40f" },
+    { mime = "audio/*", fg = "#1abc9c" },
+
+    # Archives
+    { mime = "application/zip",  fg = "#e74c3c" },
+    { mime = "application/gzip", fg = "#e74c3c" },
+    { mime = "application/x-tar", fg = "#e74c3c" },
+
+    # Documents
+    { mime = "application/pdf", fg = "#e74c3c" },
+    { mime = "application/json", fg = "#f1c40f" },
+    { mime = "text/markdown", fg = "#3498db" },
+
+    # Fallbacks
+    { name = "*/", fg = "#d4af37", bold = true },
+]
