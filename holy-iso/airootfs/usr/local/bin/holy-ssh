@@ -1,0 +1,127 @@
+#!/usr/bin/env bash
+# EIGHT.ONE OS — SSH Key Setup Helper
+# Interactive key generation and GitHub/GitLab configuration
+
+set -euo pipefail
+
+GOLD='\e[33m'
+CYAN='\e[36m'
+GREEN='\e[32m'
+RED='\e[31m'
+RESET='\e[0m'
+BOLD='\e[1m'
+
+header() {
+    echo -e "\n${GOLD}${BOLD}╔══════════════════════════════════════╗${RESET}"
+    echo -e "${GOLD}${BOLD}║     holy-ssh — SSH Key Manager       ║${RESET}"
+    echo -e "${GOLD}${BOLD}╚══════════════════════════════════════╝${RESET}\n"
+}
+
+generate_key() {
+    local email key_type key_path
+
+    echo -e "${CYAN}Email for the SSH key:${RESET}"
+    read -rp "  > " email
+
+    if [ -z "$email" ]; then
+        echo -e "${RED}Email cannot be empty.${RESET}"
+        return 1
+    fi
+
+    key_type="ed25519"
+    key_path="$HOME/.ssh/id_${key_type}"
+
+    if [ -f "$key_path" ]; then
+        echo -e "${GOLD}⚠ Key already exists at ${key_path}${RESET}"
+        echo -n "  Overwrite? (y/N): "
+        read -rn1 confirm
+        echo
+        if [ "$confirm" != "y" ] && [ "$confirm" != "Y" ]; then
+            echo -e "${CYAN}Keeping existing key.${RESET}"
+            copy_key "$key_path"
+            return 0
+        fi
+    fi
+
+    mkdir -p "$HOME/.ssh"
+    chmod 700 "$HOME/.ssh"
+
+    ssh-keygen -t "$key_type" -C "$email" -f "$key_path" -N "" -q
+    echo -e "\n${GREEN}✓ SSH key generated:${RESET} ${key_path}"
+
+    copy_key "$key_path"
+}
+
+copy_key() {
+    local key_path="${1}.pub"
+
+    if [ ! -f "$key_path" ]; then
+        echo -e "${RED}Public key not found at ${key_path}${RESET}"
+        return 1
+    fi
+
+    if command -v wl-copy &>/dev/null && [ -n "${WAYLAND_DISPLAY:-}" ]; then
+        wl-copy < "$key_path"
+        echo -e "${GREEN}✓ Public key copied to clipboard!${RESET}"
+    else
+        echo -e "${CYAN}Your public key:${RESET}"
+        echo ""
+        cat "$key_path"
+        echo ""
+    fi
+
+    echo -e "\n${GOLD}Add this key to:${RESET}"
+    echo -e "  ${CYAN}GitHub:${RESET}    https://github.com/settings/ssh/new"
+    echo -e "  ${CYAN}GitLab:${RESET}    https://gitlab.com/-/user_settings/ssh_keys"
+    echo -e "  ${CYAN}Bitbucket:${RESET} https://bitbucket.org/account/settings/ssh-keys/"
+}
+
+list_keys() {
+    local ssh_dir="$HOME/.ssh"
+
+    if [ ! -d "$ssh_dir" ] || [ -z "$(find "$ssh_dir" -name '*.pub' 2>/dev/null)" ]; then
+        echo -e "${CYAN}No SSH keys found. Generate one with: holy-ssh generate${RESET}"
+        return 0
+    fi
+
+    echo -e "${GOLD}SSH Keys:${RESET}\n"
+    for pub in "$ssh_dir"/*.pub; do
+        local name comment
+        name="$(basename "$pub" .pub)"
+        comment="$(awk '{print $NF}' "$pub")"
+        echo -e "  ${GREEN}●${RESET} ${BOLD}${name}${RESET} — ${comment}"
+    done
+}
+
+test_connection() {
+    local service="${1:-github}"
+
+    case "$service" in
+        github)  echo -e "${CYAN}Testing GitHub...${RESET}";  ssh -T git@github.com 2>&1 || true ;;
+        gitlab)  echo -e "${CYAN}Testing GitLab...${RESET}";  ssh -T git@gitlab.com 2>&1 || true ;;
+        *)       echo -e "${RED}Unknown service: ${service}${RESET}" ;;
+    esac
+}
+
+show_help() {
+    echo -e "${GOLD}holy-ssh${RESET} — SSH Key Manager"
+    echo ""
+    echo "Usage: holy-ssh [command]"
+    echo ""
+    echo "Commands:"
+    echo "  generate   Generate a new SSH key and copy to clipboard"
+    echo "  list       List existing SSH keys"
+    echo "  copy       Copy public key to clipboard"
+    echo "  test       Test SSH connection (github/gitlab)"
+    echo ""
+}
+
+header
+
+case "${1:-help}" in
+    generate|gen) generate_key ;;
+    list|ls)      list_keys ;;
+    copy)         copy_key "$HOME/.ssh/id_ed25519" ;;
+    test)         test_connection "${2:-github}" ;;
+    *)            show_help ;;
+esac

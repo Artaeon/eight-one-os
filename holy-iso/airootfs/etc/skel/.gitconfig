@@ -1,0 +1,77 @@
+[user]
+	name = Builder
+	email = builder@eightone.os
+
+[init]
+	defaultBranch = main
+
+[core]
+	editor = nvim
+	pager = delta
+	autocrlf = input
+
+[interactive]
+	diffFilter = delta --color-only
+
+[delta]
+	navigate = true
+	light = false
+	side-by-side = true
+	line-numbers = true
+	syntax-theme = Dracula
+
+[merge]
+	conflictstyle = diff3
+
+[diff]
+	colorMoved = default
+
+[alias]
+	# Prettier log
+	lg = log --graph --pretty=format:'%C(yellow)%h%Creset -%C(auto)%d%Creset %s %C(dim)(%cr) %C(cyan)<%an>%Creset' --abbrev-commit -20
+	# Quick shortcuts
+	s = status -sb
+	co = checkout
+	br = branch -v
+	ci = commit
+	# Undo last commit (keep changes)
+	undo = reset --soft HEAD~1
+	# Amend without editing message
+	amend = commit --amend --no-edit
+	# Show last commit
+	last = log -1 HEAD --stat
+	# List all branches
+	branches = branch -a
+	# Stash shortcuts
+	sl = stash list
+	sp = stash pop
+	ss = stash save
+	# Diff staged files
+	ds = diff --staged
+	# Pretty diff
+	d = diff --color-words
+	# Who wrote what
+	who = shortlog -sn --no-merges
+
+[pull]
+	rebase = true
+
+[push]
+	autoSetupRemote = true
+	default = current
+
+[fetch]
+	prune = true
+
+[color]
+	ui = true
+
+[color "branch"]
+	current = yellow bold
+	local = green
+	remote = cyan
+
+[color "status"]
+	added = green
+	changed = yellow
+	untracked = red
