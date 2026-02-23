@@ -3,6 +3,8 @@ name: Build EIGHT.ONE OS ISO
 on:
   push:
     branches: [main]
+    paths:
+      - 'holy-iso/**'
   workflow_dispatch:
     inputs:
       release:
@@ -22,7 +24,7 @@ jobs:
     container:
       image: archlinux:latest
       options: --privileged
-    
+
     steps:
       - name: Install build dependencies
         run: |
@@ -36,11 +38,12 @@ jobs:
         uses: actions/cache@v4
         with:
           path: /var/cache/pacman/pkg
-          key: pacman-${{ hashFiles('packages.x86_64') }}
+          key: pacman-${{ hashFiles('holy-iso/packages.x86_64') }}
           restore-keys: pacman-
 
       - name: Build ISO
         run: |
+          cd holy-iso
           mkarchiso -v -w /tmp/archiso-work -o /tmp/archiso-out .
 
       - name: Get ISO filename
@@ -51,7 +54,6 @@ jobs:
           echo "path=$ISO_FILE" >> "$GITHUB_OUTPUT"
           echo "name=$ISO_NAME" >> "$GITHUB_OUTPUT"
           echo "date=$(date +%Y.%m.%d)" >> "$GITHUB_OUTPUT"
-          # Generate SHA256 checksum
           sha256sum "$ISO_FILE" > "/tmp/archiso-out/${ISO_NAME}.sha256"
 
       - name: Upload ISO as artifact
@@ -84,16 +86,11 @@ jobs:
             
             ### Quick Start
             ```bash
-            # UEFI boot (recommended)
-            qemu-system-x86_64 -m 4G -bios /usr/share/ovmf/OVMF.fd -cdrom eight-one-os-*.iso
+            # UEFI boot
+            qemu-system-x86_64 -m 4G -bios /usr/share/ovmf/OVMF.fd -cdrom ${{ steps.iso.outputs.name }}
             
             # Or write to USB
-            sudo dd if=eight-one-os-*.iso of=/dev/sdX bs=4M status=progress
-            ```
-            
-            ### Verify
-            ```bash
-            sha256sum -c eight-one-os-*.sha256
+            sudo dd if=${{ steps.iso.outputs.name }} of=/dev/sdX bs=4M status=progress
             ```
           files: |
             ${{ steps.iso.outputs.path }}

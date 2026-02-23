@@ -7,6 +7,8 @@ __pycache__/
 holy-iso/out/
 holy-iso/work/
 /tmp/archiso-tmp/
+*.iso
+*.sha256
 
 # OS files
 .DS_Store
