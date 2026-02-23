@@ -191,3 +191,17 @@ ki18n
 qt5-svg
 qt5-xmlpatterns
 squashfs-tools
+
+# Phase 14-17: Premium OS Polish
+nwg-look
+qt5ct
+papirus-icon-theme
+cliphist
+wf-recorder
+udisks2
+networkmanager
+bluez
+bluez-utils
+blueman
+wlr-randr
+git-delta

@@ -16,6 +16,8 @@ echo "KEYMAP=de-latin1" > /etc/vconsole.conf
 cp -aT /etc/skel/ /root/
 chmod 700 /root
 systemctl enable systemd-networkd systemd-resolved
+systemctl enable NetworkManager
+systemctl enable bluetooth
 systemctl enable ollama
 systemctl set-default multi-user.target
 
