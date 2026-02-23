@@ -1,0 +1,23 @@
+// EIGHT.ONE OS — Polkit Rules
+// Allow wheel group to manage network, bluetooth, and storage without password
+
+polkit.addRule(function(action, subject) {
+    if (subject.isInGroup("wheel")) {
+        // NetworkManager actions
+        if (action.id.indexOf("org.freedesktop.NetworkManager") === 0) {
+            return polkit.Result.YES;
+        }
+        // Bluetooth actions
+        if (action.id.indexOf("org.bluez") === 0) {
+            return polkit.Result.YES;
+        }
+        // udisks2 — mount/unmount removable drives
+        if (action.id.indexOf("org.freedesktop.udisks2") === 0) {
+            return polkit.Result.YES;
+        }
+        // Power management — suspend, hibernate, reboot, shutdown
+        if (action.id.indexOf("org.freedesktop.login1") === 0) {
+            return polkit.Result.YES;
+        }
+    }
+});

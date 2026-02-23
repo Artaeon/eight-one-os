@@ -8,6 +8,8 @@ usermod -s /usr/bin/zsh root
 # Create the holy live user
 useradd -m -g users -G wheel,audio,video,input,storage -s /usr/bin/zsh holy
 passwd -d holy
+# NOPASSWD for live session (blank password). holy-welcome prompts to set a password.
+# After password is set, user should edit /etc/sudoers.d/wheel to require password.
 echo "%wheel ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/wheel
 chmod 440 /etc/sudoers.d/wheel
 
