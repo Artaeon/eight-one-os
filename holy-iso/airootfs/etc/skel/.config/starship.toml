@@ -1,0 +1,65 @@
+# EIGHT.ONE OS — Starship Prompt Configuration
+# Gold-accented minimal prompt with dev context
+
+format = """$directory$git_branch$git_status$rust$python$nodejs$golang$docker_context$cmd_duration$line_break$character"""
+
+[character]
+success_symbol = "[\\$](bold #d4af37)"
+error_symbol = "[\\$](bold #e74c3c)"
+vimcmd_symbol = "[V](bold #d4af37)"
+
+[directory]
+format = "[$path]($style)[$read_only]($read_only_style) "
+style = "bold #d4af37"
+read_only = " "
+read_only_style = "#e74c3c"
+truncation_length = 3
+truncate_to_repo = true
+
+[git_branch]
+format = "[$symbol$branch(:$remote_branch)]($style) "
+symbol = " "
+style = "#45b7d1"
+
+[git_status]
+format = '([$all_status$ahead_behind]($style) )'
+style = "#e74c3c"
+ahead = "${count}"
+behind = "${count}"
+modified = "!"
+staged = "+"
+untracked = "?"
+deleted = "x"
+conflicted = "="
+
+[cmd_duration]
+format = "[$duration]($style) "
+style = "dimmed #e8e6df"
+min_time = 2_000
+show_milliseconds = false
+
+[rust]
+format = "[$symbol($version)]($style) "
+symbol = " "
+style = "#e74c3c"
+
+[python]
+format = "[$symbol($version)]($style) "
+symbol = " "
+style = "#3498db"
+
+[nodejs]
+format = "[$symbol($version)]($style) "
+symbol = " "
+style = "#2ecc71"
+
+[golang]
+format = "[$symbol($version)]($style) "
+symbol = " "
+style = "#45b7d1"
+
+[docker_context]
+format = "[$symbol$context]($style) "
+symbol = " "
+style = "#3498db"
+only_with_files = true
