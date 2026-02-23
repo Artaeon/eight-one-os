@@ -20,7 +20,15 @@ systemctl enable NetworkManager
 systemctl enable bluetooth
 systemctl enable ollama
 systemctl enable greetd
+systemctl enable ufw
 systemctl set-default graphical.target
+
+# Configure UFW firewall defaults
+ufw default deny incoming
+ufw default allow outgoing
+ufw allow ssh
+ufw allow mdns
+ufw --force enable
 
 # Set Plymouth theme
 plymouth-set-default-theme eightone

@@ -213,3 +213,4 @@ pipewire-audio
 pipewire-pulse
 pipewire-alsa
 brightnessctl
+ufw
