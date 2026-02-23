@@ -44,4 +44,5 @@ file_permissions=(
   ["/usr/local/bin/holy-bluetooth"]="0:0:755"
   ["/usr/local/bin/holy-display"]="0:0:755"
   ["/usr/local/bin/holy-aur"]="0:0:755"
+  ["/usr/local/bin/eightone-update"]="0:0:755"
 )

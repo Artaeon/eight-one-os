@@ -1,61 +1,96 @@
 #!/usr/bin/env bash
-# EIGHT.ONE OS — Git-based OS Updater
-# Pulls latest settings, scripts, and dotfiles from the central repository.
+# EIGHT.ONE OS — System Updater
+# Updates system packages and optionally pulls latest holy-* scripts
 
-GOLD="\e[33m"
-CYAN="\e[36m"
-BOLD="\e[1m"
-RESET="\e[0m"
+set -euo pipefail
 
-REPO_URL="https://github.com/RaphaelLugmayr/eightone-os.git"
-CLONE_DIR="$HOME/.eightone-os"
+GOLD='\e[33m'
+CYAN='\e[36m'
+GREEN='\e[32m'
+RED='\e[31m'
+DIM='\e[2m'
+RESET='\e[0m'
+BOLD='\e[1m'
 
-clear
-echo -e "${GOLD}${BOLD}"
-figlet -f small "8.1 Updater" 2>/dev/null || echo "═══ 8.1 OS UPDATER ═══"
-echo -e "${RESET}"
+REPO_URL="https://raw.githubusercontent.com/Artaeon/eight-one-os/main/holy-iso/airootfs/usr/local/bin"
+SCRIPTS_DIR="/usr/local/bin"
 
-echo -e "This will sync your system with the latest EIGHT.ONE OS code."
-echo -e "Repository: ${CYAN}$REPO_URL${RESET}\n"
+header() {
+    echo -e "${GOLD}${BOLD}╔══════════════════════════════════════╗${RESET}"
+    echo -e "${GOLD}${BOLD}║   eightone-update — System Updater   ║${RESET}"
+    echo -e "${GOLD}${BOLD}╚══════════════════════════════════════╝${RESET}"
+}
 
-if ! gum confirm "Proceed with the update?"; then
-    echo "Update cancelled."
-    exit 0
-fi
+update_system() {
+    echo -e "\n${CYAN}[1/3] Updating keyring...${RESET}"
+    sudo pacman -Sy --noconfirm archlinux-keyring 2>/dev/null || true
 
-# 1. Update pacman packages first
-echo -e "\n${GOLD}⟐ Step 1: Updating System Packages${RESET}"
-sudo pacman -Syu --noconfirm
+    echo -e "\n${CYAN}[2/3] Updating system packages...${RESET}"
+    sudo pacman -Syu --noconfirm
 
-# 2. Clone or pull the repo
-echo -e "\n${GOLD}⟐ Step 2: Syncing EIGHT.ONE Repository${RESET}"
-if [ -d "$CLONE_DIR" ]; then
-    echo "Repository exists. Pulling latest changes..."
-    cd "$CLONE_DIR" || exit
-    git pull origin main
-else
-    echo "Cloning repository..."
-    git clone "$REPO_URL" "$CLONE_DIR"
-    cd "$CLONE_DIR" || exit
-fi
+    echo -e "\n${GREEN}✓ System packages updated.${RESET}"
+}
 
-# 3. Apply configurations (Assuming standard structure in the repo)
-echo -e "\n${GOLD}⟐ Step 3: Applying Configurations${RESET}"
+update_scripts() {
+    echo -e "\n${CYAN}[3/3] Updating holy-* scripts...${RESET}"
 
-if [ -d "$CLONE_DIR/airootfs/etc/skel/.config" ]; then
-    echo "Syncing dotfiles..."
-    cp -r "$CLONE_DIR/airootfs/etc/skel/.config/"* "$HOME/.config/"
-fi
+    local updated=0
 
-if [ -d "$CLONE_DIR/airootfs/usr/local/bin" ]; then
-    echo "Updating system scripts..."
-    sudo cp -r "$CLONE_DIR/airootfs/usr/local/bin/"* /usr/local/bin/
-    sudo chmod +x /usr/local/bin/*
-fi
+    for script in "$SCRIPTS_DIR"/holy-*; do
+        local name
+        name="$(basename "$script")"
+        local url="${REPO_URL}/${name}"
 
-echo -e "\n${GOLD}${BOLD}✓ EIGHT.ONE OS UPDATE COMPLETE!${RESET}"
-echo -e "Some changes (like Hyprland config) take effect immediately."
-echo -e "Others may require a restart."
-echo ""
-gum input --placeholder "Press Enter to finish..."
-clear
+        local remote_hash local_hash
+        remote_hash="$(curl -sL "$url" 2>/dev/null | sha256sum | awk '{print $1}')" || continue
+        local_hash="$(sha256sum "$script" 2>/dev/null | awk '{print $1}')" || continue
+
+        if [ "$remote_hash" != "$local_hash" ] && [ -n "$remote_hash" ] && [ "$remote_hash" != "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" ]; then
+            echo -e "  ${GOLD}↑${RESET} Updating ${name}..."
+            sudo curl -sL "$url" -o "$script" && sudo chmod 755 "$script"
+            ((updated++))
+        fi
+    done
+
+    if [ "$updated" -gt 0 ]; then
+        echo -e "${GREEN}✓ Updated ${updated} script(s).${RESET}"
+    else
+        echo -e "${DIM}  All scripts up to date.${RESET}"
+    fi
+}
+
+update_aur() {
+    if command -v paru &>/dev/null; then
+        echo -e "\n${CYAN}Updating AUR packages...${RESET}"
+        paru -Sua --noconfirm 2>/dev/null || true
+        echo -e "${GREEN}✓ AUR packages updated.${RESET}"
+    fi
+}
+
+show_help() {
+    echo -e "${GOLD}eightone-update${RESET} — System Updater"
+    echo ""
+    echo "Usage: eightone-update [command]"
+    echo ""
+    echo "Commands:"
+    echo "  all        Update everything (default)"
+    echo "  system     Update system packages only"
+    echo "  scripts    Update holy-* scripts from GitHub"
+    echo "  aur        Update AUR packages (if paru installed)"
+    echo ""
+}
+
+header
+
+case "${1:-all}" in
+    all)
+        update_system
+        update_scripts
+        update_aur
+        echo -e "\n${GREEN}${BOLD}✓ EIGHT.ONE OS is up to date!${RESET}\n"
+        ;;
+    system)  update_system ;;
+    scripts) update_scripts ;;
+    aur)     update_aur ;;
+    *)       show_help ;;
+esac
