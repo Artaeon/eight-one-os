@@ -25,12 +25,11 @@ systemctl enable greetd
 systemctl enable ufw
 systemctl set-default graphical.target
 
-# Configure UFW firewall defaults
-ufw default deny incoming
-ufw default allow outgoing
-ufw allow ssh
-ufw allow mdns
-ufw --force enable
+# Configure UFW firewall via config files (can't run ufw in chroot)
+sed -i 's/^ENABLED=no/ENABLED=yes/' /etc/ufw/ufw.conf 2>/dev/null || true
+sed -i 's/^DEFAULT_INPUT_POLICY=.*/DEFAULT_INPUT_POLICY="DROP"/' /etc/default/ufw 2>/dev/null || true
+sed -i 's/^DEFAULT_OUTPUT_POLICY=.*/DEFAULT_OUTPUT_POLICY="ACCEPT"/' /etc/default/ufw 2>/dev/null || true
+sed -i 's/^DEFAULT_FORWARD_POLICY=.*/DEFAULT_FORWARD_POLICY="DROP"/' /etc/default/ufw 2>/dev/null || true
 
 # Set Plymouth theme
 plymouth-set-default-theme eightone
