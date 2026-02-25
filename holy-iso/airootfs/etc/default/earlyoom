@@ -1,0 +1,3 @@
+# EIGHT.ONE OS — earlyoom configuration
+# Kill memory hogs before system freezes
+EARLYOOM_ARGS="-r 3600 -m 5 -s 5 --prefer '(Web Content|Isolated Web)' --avoid '(Xorg|Hyprland|waybar|pipewire|systemd)' -n"
