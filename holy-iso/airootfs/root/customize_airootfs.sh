@@ -37,5 +37,16 @@ sed -i 's/^DEFAULT_FORWARD_POLICY=.*/DEFAULT_FORWARD_POLICY="DROP"/' /etc/defaul
 # Set Plymouth theme
 plymouth-set-default-theme eightone
 
+# Enable CUPS printing
+systemctl enable cups
+
+# Configure Snapper for automatic BTRFS snapshots
+if command -v snapper &>/dev/null; then
+    snapper --no-dbus -c root create-config / 2>/dev/null || true
+fi
+
+# Configure Flatpak
+flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo 2>/dev/null || true
+
 # Pre-loading of AI models removed to speed up ISO build.
 # Users can run `ollama pull qwen2.5-coder:1.5b` after installation.
