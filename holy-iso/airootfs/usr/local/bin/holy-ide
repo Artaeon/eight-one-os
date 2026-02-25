@@ -1,0 +1,120 @@
+#!/usr/bin/env bash
+# EIGHT.ONE OS — AI-Integrated IDE
+# Wrapper around VS Code OSS with first-run extension setup and custom theme
+
+set -euo pipefail
+
+GOLD='\e[33m'
+CYAN='\e[36m'
+GREEN='\e[32m'
+DIM='\e[2m'
+RESET='\e[0m'
+BOLD='\e[1m'
+
+CODE_DIR="$HOME/.config/Code - OSS"
+SETUP_FLAG="$CODE_DIR/.eightone-setup-done"
+EXTENSIONS_DIR="$CODE_DIR/User/extensions"
+THEME_FILE="$CODE_DIR/User/themes/eightone-gold.json"
+
+# Extensions to install on first run
+EXTENSIONS=(
+    # AI Coding Assistants
+    "continue.continue"               # Continue — open-source AI assistant (works with Ollama, Claude, GPT)
+    "saoudrizwan.claude-dev"           # Cline — Claude-powered AI pair programmer
+
+    # Developer Experience
+    "eamodio.gitlens"                  # GitLens — advanced Git integration
+    "esbenp.prettier-vscode"           # Prettier — code formatter
+    "dbaeumer.vscode-eslint"           # ESLint — JS/TS linter
+    "bradlc.vscode-tailwindcss"        # Tailwind CSS IntelliSense
+    "golang.go"                        # Go language support
+    "ms-python.python"                 # Python language support
+    "rust-lang.rust-analyzer"          # Rust language support
+    "redhat.vscode-yaml"              # YAML language support
+    "ms-azuretools.vscode-docker"     # Docker support
+
+    # UI/UX
+    "pkief.material-icon-theme"        # Material icon theme
+    "usernamehw.errorlens"             # Inline error highlighting
+    "streetsidesoftware.code-spell-checker"  # Spellcheck
+)
+
+install_theme() {
+    # Register the EIGHT.ONE theme in the extensions system
+    local ext_dir="$HOME/.vscode-oss/extensions/eightone-gold-theme"
+    mkdir -p "$ext_dir"
+
+    cat > "$ext_dir/package.json" << 'PKGJSON'
+{
+    "name": "eightone-gold-theme",
+    "displayName": "EIGHT.ONE Gold",
+    "version": "1.0.0",
+    "publisher": "eightone",
+    "engines": { "vscode": "^1.60.0" },
+    "categories": ["Themes"],
+    "contributes": {
+        "themes": [{
+            "label": "EIGHT.ONE Gold",
+            "uiTheme": "vs-dark",
+            "path": "./theme.json"
+        }]
+    }
+}
+PKGJSON
+
+    cp "$THEME_FILE" "$ext_dir/theme.json"
+    echo -e "  ${GREEN}✓${RESET} EIGHT.ONE Gold theme installed"
+}
+
+install_extensions() {
+    echo -e "${GOLD}${BOLD}╔══════════════════════════════════════╗${RESET}"
+    echo -e "${GOLD}${BOLD}║     EIGHT.ONE IDE — First Setup      ║${RESET}"
+    echo -e "${GOLD}${BOLD}╚══════════════════════════════════════╝${RESET}"
+    echo ""
+
+    install_theme
+
+    echo -e "\n${CYAN}Installing extensions...${RESET}\n"
+
+    for ext in "${EXTENSIONS[@]}"; do
+        local name="${ext#*.}"
+        echo -ne "  ${DIM}Installing ${name}...${RESET}"
+        if code --install-extension "$ext" --force >/dev/null 2>&1; then
+            echo -e "\r  ${GREEN}✓${RESET} ${name}                    "
+        else
+            echo -e "\r  ${DIM}⊘${RESET} ${name} (skipped)          "
+        fi
+    done
+
+    # Install AI CLI tools
+    echo -e "\n${CYAN}Installing AI CLI tools...${RESET}\n"
+
+    if command -v npm &>/dev/null; then
+        echo -ne "  ${DIM}Installing Claude Code CLI...${RESET}"
+        if sudo npm install -g @anthropic-ai/claude-code >/dev/null 2>&1; then
+            echo -e "\r  ${GREEN}✓${RESET} Claude Code CLI              "
+        else
+            echo -e "\r  ${DIM}⊘${RESET} Claude Code (install later: npm i -g @anthropic-ai/claude-code)"
+        fi
+
+        echo -ne "  ${DIM}Installing Gemini CLI...${RESET}"
+        if sudo npm install -g @google/gemini-cli >/dev/null 2>&1; then
+            echo -e "\r  ${GREEN}✓${RESET} Gemini CLI                   "
+        else
+            echo -e "\r  ${DIM}⊘${RESET} Gemini CLI (install later: npm i -g @google/gemini-cli)"
+        fi
+    fi
+
+    touch "$SETUP_FLAG"
+
+    echo -e "\n${GREEN}${BOLD}✓ EIGHT.ONE IDE setup complete!${RESET}"
+    echo -e "${DIM}Extensions and AI tools are ready to use.${RESET}\n"
+}
+
+# First-run setup
+if [ ! -f "$SETUP_FLAG" ]; then
+    install_extensions
+fi
+
+# Launch VS Code with passed arguments
+exec code "$@"
