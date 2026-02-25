@@ -46,4 +46,7 @@ file_permissions=(
   ["/usr/local/bin/holy-aur"]="0:0:755"
   ["/usr/local/bin/eightone-update"]="0:0:755"
   ["/usr/local/bin/holy-ide"]="0:0:755"
+  ["/usr/local/bin/holy-menu"]="0:0:755"
+  ["/usr/local/bin/holy-browser"]="0:0:755"
+  ["/usr/local/bin/holy-notify"]="0:0:755"
 )

@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+# EIGHT.ONE OS — Command Palette
+# Central command menu — access every tool and action from one place
+# Triggered via Ctrl+Super+Space
+
+set -euo pipefail
+
+# ── Actions ──
+# Format: "icon  Label | command"
+
+ACTIONS=(
+    # ─── Apps ───
+    "  Terminal|kitty"
+    "  Browser|holy-browser"
+    "  IDE|holy-ide"
+    "  Files|kitty -e yazi"
+    "  Obsidian|obsidian"
+
+    # ─── AI Tools ───
+    "  AI Assistant|kitty --title 'Holy AI' -e holy-ai"
+    "  Claude Code|kitty --title 'Claude Code' -e claude"
+    "  Gemini CLI|kitty --title 'Gemini' -e gemini"
+
+    # ─── Holy Scripts ───
+    "  Settings|kitty -e holy-settings"
+    "  Bible|kitty -e holy-bible"
+    "  WiFi|kitty -e holy-wifi"
+    "  Bluetooth|kitty -e holy-bluetooth"
+    "  Display|kitty -e holy-display"
+    "  SSH Keys|kitty -e holy-ssh"
+    "  Git Tools|kitty -e holy-git"
+    "  Dashboard|kitty --title 'Holy Dash' -e holy-dash"
+    "  Dev Tools|kitty --title 'Holy Dev' -e holy-dev"
+    "  Flow Timer|kitty -e holy-flow tui"
+    "  Focus Mode|kitty -e holy-focus builder"
+    "  Vibes|kitty -e holy-vibes"
+    "  Notifications|kitty -e holy-notify"
+
+    # ─── System ───
+    "  System Update|kitty --hold -e eightone-update"
+    "  Install AUR Package|kitty -e holy-aur"
+    "  Install Flatpak|kitty -e bash -c 'flatpak search \"\$(gum input --placeholder \"Search Flatpak...\")\" && read'"
+    "  System Monitor|kitty -e btop"
+    "  Disk Usage|kitty -e dust"
+    "  Processes|kitty -e procs"
+    "  Record Screen|holy-record toggle"
+    "  Clipboard|cliphist list | fuzzel --dmenu | cliphist decode | wl-copy"
+
+    # ─── Power ───
+    "  Lock Screen|hyprlock"
+    "  Suspend|systemctl suspend"
+    "  Reboot|systemctl reboot"
+    "  Shutdown|systemctl poweroff"
+    "  Logout|hyprctl dispatch exit"
+)
+
+# Build the menu entries (only show the label part)
+MENU=""
+for action in "${ACTIONS[@]}"; do
+    label="${action%%|*}"
+    MENU+="${label}\n"
+done
+
+# Show fuzzel menu and get selection
+SELECTED=$(echo -e "$MENU" | fuzzel --dmenu \
+    --prompt="  " \
+    --width=45 \
+    --lines=20 \
+    --horizontal-pad=20 \
+    --vertical-pad=12 \
+    --inner-pad=8 \
+    --border-width=2 \
+    --border-radius=12 \
+    --border-color=d4af37ff \
+    --background=0a0a0fee \
+    --text-color=e8e6dfff \
+    --match-color=d4af37ff \
+    --selection-color=d4af3733 \
+    --selection-text-color=d4af37ff \
+    --font="JetBrainsMono Nerd Font:size=12" \
+)
+
+[ -z "$SELECTED" ] && exit 0
+
+# Find the matching command
+for action in "${ACTIONS[@]}"; do
+    label="${action%%|*}"
+    cmd="${action##*|}"
+    if [ "$label" = "$SELECTED" ]; then
+        eval "exec $cmd" &
+        exit 0
+    fi
+done
