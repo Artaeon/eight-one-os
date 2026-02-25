@@ -214,3 +214,6 @@ pipewire-pulse
 pipewire-alsa
 brightnessctl
 ufw
+code
+npm
+python-pipx
