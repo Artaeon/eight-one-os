@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+# EIGHT.ONE OS — Notification History Viewer
+# View, search, and clear notification history
+
+set -euo pipefail
+
+GOLD='\e[33m'
+CYAN='\e[36m'
+GREEN='\e[32m'
+DIM='\e[2m'
+RED='\e[31m'
+RESET='\e[0m'
+BOLD='\e[1m'
+
+HISTORY_FILE="$HOME/.local/share/mako/history.log"
+
+mkdir -p "$(dirname "$HISTORY_FILE")"
+touch "$HISTORY_FILE"
+
+show_history() {
+    local count="${1:-20}"
+
+    if [ ! -s "$HISTORY_FILE" ]; then
+        echo -e "${DIM}No notification history.${RESET}"
+        return
+    fi
+
+    echo -e "${GOLD}${BOLD}╔══════════════════════════════════════╗${RESET}"
+    echo -e "${GOLD}${BOLD}║    Notification History              ║${RESET}"
+    echo -e "${GOLD}${BOLD}╚══════════════════════════════════════╝${RESET}"
+    echo ""
+
+    tail -n "$count" "$HISTORY_FILE" | tac | while IFS='|' read -r timestamp summary body; do
+        local time_str
+        time_str="$(date -d "@$timestamp" '+%H:%M' 2>/dev/null || echo "??:??")"
+
+        echo -e "  ${DIM}${time_str}${RESET}  ${GOLD}${summary}${RESET}"
+        if [ -n "$body" ] && [ "$body" != "{body}" ]; then
+            echo -e "         ${DIM}${body}${RESET}"
+        fi
+    done
+
+    echo ""
+    echo -e "${DIM}Showing last ${count} notifications. Total: $(wc -l < "$HISTORY_FILE")${RESET}"
+}
+
+search_history() {
+    local query="$1"
+    echo -e "${CYAN}Searching for: ${query}${RESET}\n"
+
+    grep -i "$query" "$HISTORY_FILE" | tac | while IFS='|' read -r timestamp summary body; do
+        local time_str
+        time_str="$(date -d "@$timestamp" '+%H:%M %b %d' 2>/dev/null || echo "unknown")"
+        echo -e "  ${DIM}${time_str}${RESET}  ${GOLD}${summary}${RESET}"
+        if [ -n "$body" ] && [ "$body" != "{body}" ]; then
+            echo -e "              ${DIM}${body}${RESET}"
+        fi
+    done
+}
+
+clear_history() {
+    if gum confirm "Clear all notification history?"; then
+        > "$HISTORY_FILE"
+        echo -e "${GREEN}✓ History cleared.${RESET}"
+    fi
+}
+
+case "${1:-}" in
+    search) search_history "${2:-}" ;;
+    clear)  clear_history ;;
+    *)      show_history "${1:-20}" ;;
+esac

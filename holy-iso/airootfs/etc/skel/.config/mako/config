@@ -15,8 +15,13 @@ text-color=#e8e6df
 default-timeout=5000
 font=JetBrainsMono Nerd Font 11
 max-visible=4
-icon-path=/usr/share/icons/Adwaita
+icon-path=/usr/share/icons/Papirus-Dark
+max-history=50
+on-notify=exec echo "$(date +%s)|{summary}|{body}" >> ~/.local/share/mako/history.log
 
 [urgency=high]
 border-color=#e74c3c
 default-timeout=10000
+
+[urgency=low]
+default-timeout=3000
