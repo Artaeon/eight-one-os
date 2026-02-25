@@ -10,7 +10,7 @@
 
 ---
 
-EIGHT.ONE OS is an opinionated Arch Linux distribution built with `archiso`. It ships a complete Hyprland desktop, a curated set of developer tools, and 19 custom TUI utilities — all configured and themed out of the box. No post-install configuration required.
+EIGHT.ONE OS is an opinionated Arch Linux distribution built with `archiso`. It ships a complete Hyprland desktop, an AI-integrated IDE, and 21 custom TUI utilities — all configured and themed out of the box. No post-install configuration required.
 
 ## Overview
 
@@ -19,7 +19,7 @@ EIGHT.ONE OS is an opinionated Arch Linux distribution built with `archiso`. It 
 | Compositor | Hyprland (Wayland) |
 | Terminal | Kitty |
 | Shell | Zsh + Starship prompt |
-| Editor | Neovim (LazyVim IDE) |
+| Editor | Neovim (LazyVim) + VS Code (EIGHT.ONE Gold) |
 | Launcher | Fuzzel |
 | Bar | Waybar |
 | Notifications | Mako |
@@ -41,14 +41,22 @@ EIGHT.ONE OS is an opinionated Arch Linux distribution built with `archiso`. It 
 
 ### Developer Toolkit
 - **Neovim** with LazyVim — LSP for Go, TypeScript, Python, Rust, Docker, YAML, Tailwind
+- **VS Code** with custom EIGHT.ONE Gold theme and 15 pre-configured extensions
 - **Git** with delta diff viewer (side-by-side), 15+ aliases
 - **Starship** prompt with language version indicators and git status
 - Modern CLI: `bat`, `eza`, `fd`, `ripgrep`, `fzf`, `btop`, `dust`, `procs`, `jq`
 - Language support: Rust, Python 3, Node.js, GCC/G++
 
+### AI Tools
+- **Continue** — open-source AI assistant (connects to Ollama, Claude, GPT)
+- **Cline** — Claude-powered AI pair programmer (VS Code extension)
+- **Claude Code CLI** — Anthropic's terminal AI coding assistant
+- **Gemini CLI** — Google's terminal AI assistant
+- **Ollama** — local AI inference (pre-configured, runs as background service)
+
 ### Custom Utilities
 
-EIGHT.ONE ships 19 `holy-*` scripts accessible from the terminal or the `holy-settings` TUI menu:
+EIGHT.ONE ships 21 custom scripts accessible from the terminal or the `holy-settings` TUI menu:
 
 | Utility | Description |
 |---------|-------------|
@@ -71,6 +79,9 @@ EIGHT.ONE ships 19 `holy-*` scripts accessible from the terminal or the `holy-se
 | `holy-git` | Git workflow helper |
 | `holy-install` | Guided Arch installer |
 | `holy-welcome` | First-boot setup wizard |
+| `holy-ide` | AI-integrated VS Code with first-run setup |
+| `holy-aur` | Self-bootstrapping AUR helper (paru) |
+| `eightone-update` | 3-channel system updater (pacman, scripts, AUR) |
 
 ### Keyboard Shortcuts
 
@@ -81,6 +92,7 @@ EIGHT.ONE ships 19 `holy-*` scripts accessible from the terminal or the `holy-se
 | `Super + Q` | Close Window |
 | `Super + L` | Lock Screen |
 | `Super + A` | AI Assistant |
+| `Super + C` | IDE (VS Code) |
 | `Super + B` | Bible Search |
 | `Super + T` | Zellij Terminal |
 | `Super + E` | File Manager |
