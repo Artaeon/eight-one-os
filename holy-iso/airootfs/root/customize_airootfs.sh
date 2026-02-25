@@ -20,9 +20,12 @@ chmod 700 /root
 systemctl enable systemd-networkd systemd-resolved
 systemctl enable NetworkManager
 systemctl enable bluetooth
-systemctl enable ollama
 systemctl enable greetd
 systemctl enable ufw
+systemctl enable tlp
+systemctl enable earlyoom
+# Ollama disabled on boot — starts on-demand via holy-ai to save RAM/battery
+systemctl disable ollama 2>/dev/null || true
 systemctl set-default graphical.target
 
 # Configure UFW firewall via config files (can't run ufw in chroot)
