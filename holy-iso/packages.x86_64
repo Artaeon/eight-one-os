@@ -217,3 +217,9 @@ ufw
 code
 npm
 python-pipx
+
+# Phase 19: Performance & Battery Optimization
+tlp
+powertop
+earlyoom
+zram-generator
