@@ -223,3 +223,12 @@ tlp
 powertop
 earlyoom
 zram-generator
+
+# Phase 20: Daily Driver Essentials
+xdg-desktop-portal-hyprland
+xdg-desktop-portal-gtk
+flatpak
+cups
+cups-pdf
+libpipewire
+pipewire-jack
