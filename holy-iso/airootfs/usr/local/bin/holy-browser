@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# EIGHT.ONE OS — Browser Launcher
+# Installs Brave on first run via Flatpak, then launches it
+
+set -euo pipefail
+
+GOLD='\e[33m'
+CYAN='\e[36m'
+GREEN='\e[32m'
+DIM='\e[2m'
+RESET='\e[0m'
+BOLD='\e[1m'
+
+BRAVE_FLATPAK="com.brave.Browser"
+
+if flatpak info "$BRAVE_FLATPAK" &>/dev/null; then
+    exec flatpak run "$BRAVE_FLATPAK" "$@"
+fi
+
+echo -e "${GOLD}${BOLD}╔══════════════════════════════════════╗${RESET}"
+echo -e "${GOLD}${BOLD}║   EIGHT.ONE — Browser Setup          ║${RESET}"
+echo -e "${GOLD}${BOLD}╚══════════════════════════════════════╝${RESET}"
+echo ""
+echo -e "${CYAN}Brave Browser is not installed yet.${RESET}"
+echo ""
+
+if command -v gum &>/dev/null; then
+    if ! gum confirm "Install Brave Browser via Flatpak?"; then
+        exit 0
+    fi
+else
+    read -rp "Install Brave Browser via Flatpak? [Y/n] " answer
+    [[ "$answer" =~ ^[Nn] ]] && exit 0
+fi
+
+echo -e "\n${CYAN}Installing Brave Browser...${RESET}"
+echo -e "${DIM}This may take a few minutes on first install.${RESET}\n"
+
+if flatpak install -y flathub "$BRAVE_FLATPAK"; then
+    echo -e "\n${GREEN}${BOLD}✓ Brave Browser installed!${RESET}"
+    echo -e "${DIM}Launching...${RESET}\n"
+    exec flatpak run "$BRAVE_FLATPAK" "$@"
+else
+    echo -e "\n${DIM}Flatpak install failed. Try manually:${RESET}"
+    echo -e "  flatpak install flathub ${BRAVE_FLATPAK}"
+    exit 1
+fi
