@@ -45,10 +45,17 @@ alias gs='git s'
 alias gc='git commit'
 alias gp='git push'
 alias gl='git lg'
+<<<<<<< HEAD
 # Welcome wizard is now triggered via Hyprland exec-once autostart
+=======
+# First-run welcome wizard (greetd handles Hyprland launch — no TTY code needed)
+if [[ ! -f "$HOME/.welcome_done" ]]; then
+    holy-welcome
+fi
+>>>>>>> e659395 (fix(hyprland): resolve startup issues with greetd and env var deduplication)
 
 # Show Fastfetch system info once setup is complete
-if [ -f "$HOME/.welcome_done" ]; then
+if [[ -f "$HOME/.welcome_done" ]]; then
     fastfetch
 fi
 

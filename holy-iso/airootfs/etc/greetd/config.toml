@@ -2,5 +2,5 @@
 vt = 1
 
 [default_session]
-command = "start-hyprland"
+command = "/usr/local/bin/start-hyprland"
 user = "holy"

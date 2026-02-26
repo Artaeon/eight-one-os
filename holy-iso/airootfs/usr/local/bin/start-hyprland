@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# ── XDG Session (single source of truth) ──
+export XDG_SESSION_TYPE=wayland
+export XDG_CURRENT_DESKTOP=Hyprland
+export XDG_SESSION_DESKTOP=Hyprland
+
+# ── Cursor ──
+export WLR_NO_HARDWARE_CURSORS=1
+export HYPRLAND_NO_HARDWARE_CURSORS=1
+export XCURSOR_SIZE=24
+export XCURSOR_THEME=Adwaita
+
+# ── QT/GTK Theming ──
+export QT_QPA_PLATFORMTHEME=qt5ct
+export QT_WAYLAND_DISABLE_WINDOWDECORATION=1
+export GTK_THEME=Adwaita:dark
+
+# ── Auto-detect virtual machine and use software renderer ──
+if systemd-detect-virt -q 2>/dev/null; then
+    export WLR_RENDERER=pixman
+    export LIBGL_ALWAYS_SOFTWARE=1
+    export WLR_RENDERER_ALLOW_SOFTWARE=1
+fi
+
+exec Hyprland
