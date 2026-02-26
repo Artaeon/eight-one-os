@@ -6,7 +6,7 @@ ln -sf /usr/share/zoneinfo/UTC /etc/localtime
 usermod -s /usr/bin/zsh root
 
 # Create the holy live user
-useradd -m -g users -G wheel,audio,video,input,storage -s /usr/bin/zsh holy
+useradd -m -g users -G wheel,audio,video,input,storage,docker -s /usr/bin/zsh holy
 passwd -d holy
 # NOPASSWD for live session (blank password). holy-welcome prompts to set a password.
 # After password is set, user should edit /etc/sudoers.d/wheel to require password.
