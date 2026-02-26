@@ -56,7 +56,7 @@
         "format": "  {:%H:%M}",
         "format-alt": "  {:%A, %B %d, %Y}",
         "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>",
-        "interval": 1
+        "interval": 60
     },
     "custom/sabbath": {
         "exec": "/usr/local/bin/holy-sabbath",
