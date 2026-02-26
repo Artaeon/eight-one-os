@@ -27,7 +27,6 @@ file_permissions=(
   ["/usr/local/bin/holy-focus"]="0:0:755"
   ["/usr/local/bin/holy-vibes"]="0:0:755"
   ["/usr/local/bin/holy-sabbath"]="0:0:755"
-  ["/usr/local/bin/start-hyprland"]="0:0:755"
   ["/usr/local/bin/holy-welcome"]="0:0:755"
   ["/usr/local/bin/holy-settings"]="0:0:755"
   ["/usr/local/bin/eightone-update"]="0:0:755"
@@ -49,4 +48,5 @@ file_permissions=(
   ["/usr/local/bin/holy-menu"]="0:0:755"
   ["/usr/local/bin/holy-browser"]="0:0:755"
   ["/usr/local/bin/holy-notify"]="0:0:755"
+  ["/usr/local/bin/holy-power"]="0:0:755"
 )
