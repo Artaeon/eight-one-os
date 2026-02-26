@@ -67,7 +67,7 @@ for repo in "${repos[@]}"; do
     [ -f "Cargo.toml" ] && lang="🦀"
     [ -f "package.json" ] && lang="📦"
     [ -f "go.mod" ] && lang="🐹"
-    [ -f "requirements.txt" ] || [ -f "pyproject.toml" ] && lang="🐍"
+    { [ -f "requirements.txt" ] || [ -f "pyproject.toml" ]; } && lang="🐍"
     [ -f "Makefile" ] && [ -z "$lang" ] && lang="⚙️"
     [ -z "$lang" ] && lang="📁"
 
