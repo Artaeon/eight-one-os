@@ -3,10 +3,17 @@
 # Pomodoro-style deep work timer with Waybar integration & streak tracking
 # Usage: holy-flow [start|stop|status|waybar]
 
-GOLD="#d4af37"
-CYAN="#45b7d1"
-RED="#ff6b6b"
-GREEN="#00ff88"
+# Hex colors for gum
+GUM_GOLD="#d4af37"
+GUM_CYAN="#45b7d1"
+GUM_RED="#ff6b6b"
+GUM_GREEN="#00ff88"
+
+# ANSI colors for echo
+GOLD='\e[33m'
+CYAN='\e[36m'
+RED='\e[31m'
+GREEN='\e[32m'
 
 FLOW_DIR="$HOME/.local/share/holy-flow"
 FLOW_PID="$FLOW_DIR/flow.pid"
