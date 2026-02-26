@@ -1,6 +1,6 @@
 [user]
-	name = Builder
-	email = builder@eightone.os
+	# Set your identity: git config --global user.name "Your Name"
+	#                     git config --global user.email "you@example.com"
 
 [init]
 	defaultBranch = main
