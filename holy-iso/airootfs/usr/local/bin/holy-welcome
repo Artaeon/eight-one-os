@@ -1,70 +1,325 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
-# EIGHT.ONE OS Welcome Wizard
+# EIGHT.ONE OS — Premium Onboarding Wizard (7 Steps)
 # Requires: gum, figlet
 
-# Set colors
 GOLD="#d4af37"
 CYAN="#45b7d1"
+WHITE="#e8e6df"
+DIM="#595959"
+GREEN="#2ecc71"
 
-clear
-
-# Print title
-gum style \
-	--foreground "$GOLD" \
-	--border-foreground "$GOLD" \
-	--border double \
-	--align center \
-	--width 80 \
-	--margin "1 2" \
-	--padding "1 2" \
-	"$(figlet -c -f slant "EIGHT.ONE OS")"
-
-echo -e "\n"
-gum style --foreground "$CYAN" --align center --width 80 "Welcome to the Holy Live Environment."
-
-echo -e "\n"
-if gum confirm "Would you like to read about the philosophy and features of EIGHT.ONE OS?"; then
+# ── Step 1: Animated Intro ──
+step_intro() {
     clear
-    gum format < ~/why-eight-one.md
-    echo -e "\n"
-	gum input --prompt "Press Enter to continue..." --placeholder "" > /dev/null
-fi
+    gum style \
+        --foreground "$GOLD" \
+        --border-foreground "$GOLD" \
+        --border double \
+        --align center \
+        --width 70 \
+        --margin "2 5" \
+        --padding "1 4" \
+        "$(figlet -f slant '8.1')"
 
-clear
-gum style \
-	--foreground "$GOLD" \
-	--border-foreground "$GOLD" \
-	--border rounded \
-	--align center \
-	--width 80 \
-	--margin "1 2" \
-	--padding "1 2" \
-	"LIVE USER SETUP"
+    sleep 0.5
 
-echo -e "\nTo ensure a secure live session, please set a password for the 'holy' user.\n"
+    gum style \
+        --foreground "$WHITE" \
+        --align center \
+        --width 70 \
+        --margin "0 5" \
+        "E I G H T . O N E   O S"
 
-PASSWORD_SET=false
-while [ "$PASSWORD_SET" = false ]; do
-    PASS1=$(gum input --password --placeholder "Enter new password")
-    PASS2=$(gum input --password --placeholder "Confirm new password")
+    sleep 0.3
 
-    if [ -z "$PASS1" ]; then
-        gum style --foreground "#ff0000" "Password cannot be empty."
-    elif [ "$PASS1" != "$PASS2" ]; then
-        gum style --foreground "#ff0000" "Passwords do not match. Try again."
+    gum style \
+        --foreground "$DIM" \
+        --align center \
+        --width 70 \
+        --margin "1 5" \
+        "Infinity One — A keyboard-driven Arch Linux for developers"
+
+    echo ""
+    gum style \
+        --foreground "$GOLD" \
+        --align center \
+        --width 70 \
+        --margin "1 5" \
+        "Welcome to your new development environment."
+
+    echo ""
+    gum input --prompt "  Press Enter to begin setup... " --placeholder "" > /dev/null 2>&1 || true
+}
+
+# ── Step 2: System Overview ──
+step_overview() {
+    clear
+    gum style \
+        --foreground "$GOLD" \
+        --border-foreground "$GOLD" \
+        --border rounded \
+        --align center \
+        --width 70 \
+        --margin "1 5" \
+        --padding "0 2" \
+        "STEP 1/6 — System Overview"
+
+    echo ""
+    gum style --foreground "$WHITE" --width 70 --margin "0 7" \
+        "EIGHT.ONE OS is a keyboard-driven Arch Linux distribution built
+for developers. Everything is pre-configured and themed with a
+consistent dark gold aesthetic."
+
+    echo ""
+    gum style --foreground "$CYAN" --bold --margin "0 7" "What's included:"
+    echo ""
+    gum style --foreground "$WHITE" --margin "0 9" \
+        "  Hyprland       Tiling Wayland compositor
+  Kitty          GPU-accelerated terminal
+  Neovim         LazyVim IDE with LSP
+  VS Code        AI-integrated editor
+  Waybar         Status bar with system metrics
+  Zsh            Shell with Starship prompt
+  25+ Tools      holy-* utilities for everything"
+
+    echo ""
+    gum style --foreground "$DIM" --margin "0 7" \
+        "Theme: Gold (#d4af37) / Black (#0a0a0f) / White (#e8e6df)
+Font:  JetBrainsMono Nerd Font everywhere"
+
+    echo ""
+    gum input --prompt "  Press Enter to continue... " --placeholder "" > /dev/null 2>&1 || true
+}
+
+# ── Step 3: Quick Shortcut Reference ──
+step_shortcuts() {
+    clear
+    gum style \
+        --foreground "$GOLD" \
+        --border-foreground "$GOLD" \
+        --border rounded \
+        --align center \
+        --width 70 \
+        --margin "1 5" \
+        --padding "0 2" \
+        "STEP 2/6 — Essential Shortcuts"
+
+    echo ""
+    gum style --foreground "$CYAN" --bold --margin "0 7" "Core Navigation:"
+    echo ""
+    gum style --foreground "$WHITE" --margin "0 9" \
+        "  Super + Enter          Open Terminal
+  Super + Space          App Launcher
+  Ctrl+Super + Space     Command Palette (45+ actions)
+  Super + Q              Close Window
+  Super + Escape         Lock Screen
+  Super + H/J/K/L        Focus (vim-style)
+  Super + 1-9            Switch Workspace"
+
+    echo ""
+    gum style --foreground "$CYAN" --bold --margin "0 7" "Apps & Tools:"
+    echo ""
+    gum style --foreground "$WHITE" --margin "0 9" \
+        "  Super + A              AI Assistant
+  Super + B              Browser (Brave)
+  Super + C              IDE (VS Code)
+  Super + D              Project Dashboard
+  Super + E              File Manager (Yazi)
+  Super + S              Screenshot (area)
+  Super + /              Full Shortcut Reference"
+
+    echo ""
+    gum style --foreground "$DIM" --margin "0 7" \
+        "Tip: Press Super+/ anytime to see all shortcuts."
+
+    echo ""
+    gum input --prompt "  Press Enter to continue... " --placeholder "" > /dev/null 2>&1 || true
+}
+
+# ── Step 4: Password Setup ──
+step_password() {
+    clear
+    gum style \
+        --foreground "$GOLD" \
+        --border-foreground "$GOLD" \
+        --border rounded \
+        --align center \
+        --width 70 \
+        --margin "1 5" \
+        --padding "0 2" \
+        "STEP 3/6 — Set Your Password"
+
+    echo ""
+    gum style --foreground "$WHITE" --width 70 --margin "0 7" \
+        "The live session starts with a blank password.
+Set a password now to secure your session."
+
+    echo ""
+
+    local password_set=false
+    while [[ "$password_set" == "false" ]]; do
+        PASS1=$(gum input --password --prompt "  New password: " --placeholder "Enter password")
+        PASS2=$(gum input --password --prompt "  Confirm:      " --placeholder "Confirm password")
+
+        if [[ -z "$PASS1" ]]; then
+            gum style --foreground "#e74c3c" --margin "0 7" "  Password cannot be empty."
+        elif [[ "$PASS1" != "$PASS2" ]]; then
+            gum style --foreground "#e74c3c" --margin "0 7" "  Passwords do not match. Try again."
+        else
+            echo -e "$PASS1\n$PASS2" | sudo passwd holy > /dev/null 2>&1
+            echo ""
+            gum style --foreground "$GREEN" --margin "0 7" "  Password set successfully."
+            password_set=true
+        fi
+    done
+
+    sleep 1
+}
+
+# ── Step 5: Brave Browser Install ──
+step_browser() {
+    clear
+    gum style \
+        --foreground "$GOLD" \
+        --border-foreground "$GOLD" \
+        --border rounded \
+        --align center \
+        --width 70 \
+        --margin "1 5" \
+        --padding "0 2" \
+        "STEP 4/6 — Browser Setup"
+
+    echo ""
+    gum style --foreground "$WHITE" --width 70 --margin "0 7" \
+        "EIGHT.ONE OS uses Brave Browser via Flatpak.
+This requires an internet connection and ~500MB of space."
+
+    echo ""
+    if gum confirm --prompt.foreground "$GOLD" "  Install Brave Browser now?"; then
+        echo ""
+        gum spin --spinner dot --title "  Installing Brave Browser..." -- \
+            flatpak install -y flathub com.brave.Browser 2>/dev/null || {
+                gum style --foreground "#e74c3c" --margin "0 7" \
+                    "  Install failed. You can install later with: holy-browser"
+                sleep 2
+            }
+        gum style --foreground "$GREEN" --margin "0 7" "  Brave Browser installed."
+        sleep 1
     else
-        echo -e "$PASS1\n$PASS2" | sudo passwd holy > /dev/null 2>&1
-        gum style --foreground "#00ff00" "Password successfully set!"
-        PASSWORD_SET=true
+        echo ""
+        gum style --foreground "$DIM" --margin "0 7" \
+            "  Skipped. Run 'holy-browser' anytime to install."
+        sleep 1
     fi
-done
+}
 
-echo -e "\n"
-gum spin --spinner dot --title "Initializing Holy Environment..." -- sleep 2
+# ── Step 6: AI Model Download ──
+step_ai() {
+    clear
+    gum style \
+        --foreground "$GOLD" \
+        --border-foreground "$GOLD" \
+        --border rounded \
+        --align center \
+        --width 70 \
+        --margin "1 5" \
+        --padding "0 2" \
+        "STEP 5/6 — Local AI Setup"
 
-touch ~/.welcome_done
+    echo ""
+    gum style --foreground "$WHITE" --width 70 --margin "0 7" \
+        "EIGHT.ONE OS includes Ollama for local AI inference.
+You can download a small coding model to use offline."
+
+    echo ""
+    gum style --foreground "$DIM" --margin "0 7" \
+        "  qwen2.5-coder:1.5b — Fast coding assistant (~1GB)"
+
+    echo ""
+    if gum confirm --prompt.foreground "$GOLD" "  Download AI model now?"; then
+        echo ""
+        gum spin --spinner dot --title "  Starting Ollama..." -- \
+            bash -c 'systemctl start ollama 2>/dev/null || ollama serve &>/dev/null &' || true
+        sleep 2
+        echo ""
+        gum style --foreground "$CYAN" --margin "0 7" "  Downloading qwen2.5-coder:1.5b..."
+        ollama pull qwen2.5-coder:1.5b 2>/dev/null || {
+            gum style --foreground "#e74c3c" --margin "0 7" \
+                "  Download failed. You can try later with: holy-ai"
+            sleep 2
+        }
+        gum style --foreground "$GREEN" --margin "0 7" "  AI model ready."
+        sleep 1
+    else
+        echo ""
+        gum style --foreground "$DIM" --margin "0 7" \
+            "  Skipped. Run 'holy-ai' anytime to set up."
+        sleep 1
+    fi
+}
+
+# ── Step 7: System Ready ──
+step_ready() {
+    clear
+    gum style \
+        --foreground "$GOLD" \
+        --border-foreground "$GOLD" \
+        --border double \
+        --align center \
+        --width 70 \
+        --margin "2 5" \
+        --padding "1 4" \
+        "STEP 6/6 — System Ready"
+
+    echo ""
+    gum style \
+        --foreground "$GREEN" \
+        --bold \
+        --align center \
+        --width 70 \
+        --margin "1 5" \
+        "Your EIGHT.ONE OS is ready."
+
+    echo ""
+    gum style --foreground "$WHITE" --align center --width 70 --margin "0 5" \
+        "Quick Start:"
+
+    echo ""
+    gum style --foreground "$CYAN" --margin "0 9" \
+        "  Super + Enter      Open a terminal and start building
+  Super + C            Launch VS Code IDE
+  Super + A            Chat with local AI
+  Ctrl+Super+Space     Open the command palette
+  Super + /            View all keyboard shortcuts"
+
+    echo ""
+    gum style --foreground "$DIM" --align center --width 70 --margin "1 5" \
+        "Install to disk anytime with: holy-install"
+
+    echo ""
+
+    touch "$HOME/.welcome_done"
+
+    gum style \
+        --foreground "$GOLD" \
+        --bold \
+        --align center \
+        --width 70 \
+        --margin "1 5" \
+        "Go forth and build."
+
+    echo ""
+    gum input --prompt "  Press Enter to start... " --placeholder "" > /dev/null 2>&1 || true
+}
+
+# ── Main ──
+step_intro
+step_overview
+step_shortcuts
+step_password
+step_browser
+step_ai
+step_ready
 clear
-echo -e "\n"
-gum style --foreground "$GOLD" --align center --width 80 "System Ready. Go forth and build."
-echo -e "\n"
