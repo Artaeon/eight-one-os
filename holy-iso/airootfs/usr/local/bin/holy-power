@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# EIGHT.ONE OS — Power Menu
+# Quick power actions via gum
+
+set -euo pipefail
+
+GOLD='\e[33m'
+CYAN='\e[36m'
+GREEN='\e[32m'
+RED='\e[31m'
+RESET='\e[0m'
+BOLD='\e[1m'
+
+echo -e "${GOLD}${BOLD}╔══════════════════════════════════════╗${RESET}"
+echo -e "${GOLD}${BOLD}║       holy-power — Power Menu        ║${RESET}"
+echo -e "${GOLD}${BOLD}╚══════════════════════════════════════╝${RESET}"
+echo ""
+
+CHOICE=$(gum choose \
+    "  Lock Screen" \
+    "  Logout" \
+    "  Reboot" \
+    "⏻  Shutdown" \
+    "  Cancel" \
+)
+
+case "$CHOICE" in
+    *"Lock Screen"*)
+        hyprlock
+        ;;
+    *"Logout"*)
+        hyprctl dispatch exit
+        ;;
+    *"Reboot"*)
+        systemctl reboot
+        ;;
+    *"Shutdown"*)
+        systemctl poweroff
+        ;;
+    *"Cancel"*)
+        exit 0
+        ;;
+esac
