@@ -10,7 +10,7 @@
 
 ---
 
-EIGHT.ONE OS is an opinionated Arch Linux distribution built with `archiso`. It ships a complete Hyprland desktop, an AI-integrated IDE, and 26 custom TUI utilities — all configured and themed out of the box. No post-install configuration required. Targets the Matebook (Ryzen 3500U, 8GB RAM) with aggressive power and memory optimization.
+EIGHT.ONE OS is an opinionated Arch Linux distribution built with `archiso`. It ships a complete Hyprland desktop, an AI-integrated IDE, and 27 custom TUI utilities — all configured and themed out of the box. No post-install configuration required. Targets the Matebook (Ryzen 3500U, 8GB RAM) with aggressive power and memory optimization.
 
 ## Overview
 
@@ -68,7 +68,7 @@ EIGHT.ONE OS is an opinionated Arch Linux distribution built with `archiso`. It 
 
 ### Custom Utilities
 
-EIGHT.ONE ships 26 custom scripts accessible from the terminal, Waybar, or the command palette (`Ctrl+Super+Space`):
+EIGHT.ONE ships 27 custom scripts accessible from the terminal, Waybar, or the command palette (`Ctrl+Super+Space`):
 
 | Utility | Description |
 |---------|-------------|
@@ -97,6 +97,7 @@ EIGHT.ONE ships 26 custom scripts accessible from the terminal, Waybar, or the c
 | `holy-aur` | Self-bootstrapping AUR helper (paru) |
 | `holy-browser` | Brave Browser via Flatpak auto-installer |
 | `holy-notify` | Notification history viewer |
+| `holy-power` | Power menu (lock, logout, reboot, shutdown) |
 | `eightone-update` | 3-channel system updater (pacman, scripts, AUR) |
 
 ### Keyboard Shortcuts
@@ -110,6 +111,7 @@ Every binding is unique — no conflicts.
 | `Ctrl+Super + Space` | Command Palette (holy-menu) |
 | `Super + Q` | Close Window |
 | `Super + Escape` | Lock Screen |
+| `Super + X` | Power Menu (holy-power) |
 | `Super + A` | AI Assistant (holy-ai) |
 | `Super + B` | Browser (Brave) |
 | `Super + Shift+B` | Bible Search (holy-bible) |
@@ -140,6 +142,9 @@ Every binding is unique — no conflicts.
 | `Super + 1-9` | Switch Workspace |
 | `Super + Shift+1-9` | Move Window to Workspace |
 | `Super + `` ` | Toggle Scratchpad |
+| `Volume Keys` | Volume up/down/mute |
+| `Brightness Keys` | Brightness up/down |
+| `3-Finger Swipe` | Switch Workspace (touchpad) |
 
 ## Building
 
@@ -214,7 +219,7 @@ holy-iso/
     usr/
       local/bin/
         start-hyprland           Session launcher (env vars, VM detection)
-        holy-*                   26 custom TUI utilities
+        holy-*                   27 custom TUI utilities
       share/
         grub/themes/eightone/    Matrix-gold GRUB theme
         plymouth/themes/eightone/ Boot animation
