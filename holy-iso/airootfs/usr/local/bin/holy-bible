@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 BIBLE_FILE="$HOME/.local/share/holy-bible/kjv.txt"
 mkdir -p "$(dirname "$BIBLE_FILE")"
 

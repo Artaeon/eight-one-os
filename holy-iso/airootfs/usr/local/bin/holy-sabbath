@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Simple script to check if it's Sunday (Day 0) and send a desktop notification
 
