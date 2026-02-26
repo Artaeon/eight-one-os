@@ -91,8 +91,14 @@ connect_network() {
 }
 
 disconnect_network() {
-    nmcli dev disconnect wlan0 2>/dev/null || nmcli dev disconnect wlp0s20f3 2>/dev/null || true
-    echo -e "${GOLD}✓ Disconnected.${RESET}"
+    local wifi_dev
+    wifi_dev="$(nmcli -t -f DEVICE,TYPE dev | grep ':wifi$' | head -1 | cut -d: -f1)" || true
+    if [ -n "$wifi_dev" ]; then
+        nmcli dev disconnect "$wifi_dev" 2>/dev/null || true
+        echo -e "${GOLD}✓ Disconnected from ${wifi_dev}.${RESET}"
+    else
+        echo -e "${RED}No WiFi device found.${RESET}"
+    fi
 }
 
 forget_network() {
