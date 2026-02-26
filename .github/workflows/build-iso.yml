@@ -32,7 +32,7 @@ jobs:
       - name: Install build dependencies
         run: |
           pacman -Syu --noconfirm
-          pacman -S --noconfirm archiso git
+          pacman -S --noconfirm archiso git zstd
 
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -49,17 +49,38 @@ jobs:
           cd holy-iso
           mkarchiso -v -w /tmp/archiso-work -o /tmp/archiso-out .
 
-      - name: Get ISO filename
+      - name: Get ISO info
         id: iso
         run: |
           ISO_FILE=$(ls /tmp/archiso-out/*.iso)
           ISO_NAME=$(basename "$ISO_FILE")
+          ISO_SIZE=$(stat --printf="%s" "$ISO_FILE")
           echo "path=$ISO_FILE" >> "$GITHUB_OUTPUT"
           echo "name=$ISO_NAME" >> "$GITHUB_OUTPUT"
+          echo "size=$ISO_SIZE" >> "$GITHUB_OUTPUT"
           echo "date=$(date +%Y.%m.%d)" >> "$GITHUB_OUTPUT"
           sha256sum "$ISO_FILE" > "/tmp/archiso-out/${ISO_NAME}.sha256"
+          echo "ISO size: $(du -h "$ISO_FILE" | cut -f1)"
 
-      - name: Upload ISO as artifact
+      - name: Split ISO if larger than 1.9GB
+        id: split
+        run: |
+          ISO_FILE="${{ steps.iso.outputs.path }}"
+          ISO_SIZE="${{ steps.iso.outputs.size }}"
+          LIMIT=$((1900 * 1024 * 1024))  # 1.9GB in bytes
+
+          if [ "$ISO_SIZE" -gt "$LIMIT" ]; then
+            echo "ISO is $(du -h "$ISO_FILE" | cut -f1) — splitting into 1.9GB parts"
+            split -b 1900M -d --additional-suffix=.part "$ISO_FILE" "/tmp/archiso-out/eightone-os-"
+            echo "split=true" >> "$GITHUB_OUTPUT"
+            ls -lh /tmp/archiso-out/*.part
+          else
+            echo "ISO is $(du -h "$ISO_FILE" | cut -f1) — no split needed"
+            echo "split=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload ISO artifact (unsplit)
+        if: steps.split.outputs.split == 'false'
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.iso.outputs.name }}
@@ -67,6 +88,18 @@ jobs:
             ${{ steps.iso.outputs.path }}
             /tmp/archiso-out/*.sha256
           retention-days: 7
+          compression-level: 0
+
+      - name: Upload ISO artifact (split parts)
+        if: steps.split.outputs.split == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.iso.outputs.name }}-parts
+          path: |
+            /tmp/archiso-out/*.part
+            /tmp/archiso-out/*.sha256
+          retention-days: 7
+          compression-level: 0
 
       - name: Create Release
         if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.release == 'true')
@@ -76,27 +109,42 @@ jobs:
           name: "EIGHT.ONE OS — ${{ steps.iso.outputs.date }}"
           body: |
             ## EIGHT.ONE OS — Infinity One
-            
+
             **Build Date:** ${{ steps.iso.outputs.date }}
             **Commit:** ${{ github.sha }}
-            
+
             ### What's included
-            - Hyprland Wayland compositor with gold/black premium theme
-            - 19 `holy-*` TUI tools (AI, WiFi, Bluetooth, SSH, Flow Timer, etc.)
-            - Full developer toolkit (Neovim IDE, Git delta, Zellij, Docker, Lazygit)
-            - Unified dark theming across GTK/QT/Kitty/Fuzzel
-            - Local AI via Ollama
-            
-            ### Quick Start
+            - Hyprland Wayland compositor with Matrix-gold premium theme
+            - 26 `holy-*` TUI tools (AI, IDE, WiFi, Bluetooth, Flow Timer, etc.)
+            - Full developer toolkit (Neovim, VS Code, Git, Docker, Lazygit)
+            - AI integration (Ollama, Claude Code, Gemini CLI)
+            - TLP battery optimization + zram + earlyoom
+            - Flatpak + Brave Browser support
+
+            ### Download Instructions
+
+            **If the ISO was split into parts** (files ending in `.part`):
             ```bash
-            # UEFI boot
-            qemu-system-x86_64 -m 4G -bios /usr/share/ovmf/OVMF.fd -cdrom ${{ steps.iso.outputs.name }}
-            
-            # Or write to USB
-            sudo dd if=${{ steps.iso.outputs.name }} of=/dev/sdX bs=4M status=progress
+            # Download all .part files, then reassemble:
+            cat eightone-os-*.part > eight-one-os.iso
+
+            # Verify checksum
+            sha256sum -c *.sha256
+            ```
+
+            **Flash to USB:**
+            ```bash
+            sudo dd if=eight-one-os.iso of=/dev/sdX bs=4M status=progress oflag=sync
+            # Or use: balena-etcher, ventoy, or rufus
+            ```
+
+            **Test in QEMU:**
+            ```bash
+            qemu-system-x86_64 -m 4G -enable-kvm -bios /usr/share/ovmf/OVMF.fd -cdrom eight-one-os.iso
             ```
           files: |
-            ${{ steps.iso.outputs.path }}
+            /tmp/archiso-out/*.iso
+            /tmp/archiso-out/*.part
             /tmp/archiso-out/*.sha256
           draft: false
           prerelease: false
