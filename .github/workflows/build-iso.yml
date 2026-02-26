@@ -101,6 +101,22 @@ jobs:
           retention-days: 7
           compression-level: 0
 
+      - name: Prepare release assets
+        id: assets
+        run: |
+          mkdir -p /tmp/release-assets
+          cp /tmp/archiso-out/*.sha256 /tmp/release-assets/
+          if [ "${{ steps.split.outputs.split }}" = "true" ]; then
+            # ISO exceeded 2GB GitHub limit — upload split parts only
+            cp /tmp/archiso-out/*.part /tmp/release-assets/
+            echo "split_note=**Note:** ISO was split into parts due to GitHub's 2GB asset limit. Download all \`.part\` files and reassemble (see instructions below)." >> "$GITHUB_OUTPUT"
+          else
+            cp /tmp/archiso-out/*.iso /tmp/release-assets/
+            echo "split_note=" >> "$GITHUB_OUTPUT"
+          fi
+          echo "Release assets:"
+          ls -lh /tmp/release-assets/
+
       - name: Create Release
         if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.release == 'true')
         uses: softprops/action-gh-release@v2
@@ -112,10 +128,11 @@ jobs:
 
             **Build Date:** ${{ steps.iso.outputs.date }}
             **Commit:** ${{ github.sha }}
+            ${{ steps.assets.outputs.split_note }}
 
             ### What's included
             - Hyprland Wayland compositor with Matrix-gold premium theme
-            - 26 `holy-*` TUI tools (AI, IDE, WiFi, Bluetooth, Flow Timer, etc.)
+            - 27 `holy-*` TUI tools (AI, IDE, WiFi, Bluetooth, Flow Timer, etc.)
             - Full developer toolkit (Neovim, VS Code, Git, Docker, Lazygit)
             - AI integration (Ollama, Claude Code, Gemini CLI)
             - TLP battery optimization + zram + earlyoom
@@ -142,10 +159,7 @@ jobs:
             ```bash
             qemu-system-x86_64 -m 4G -enable-kvm -bios /usr/share/ovmf/OVMF.fd -cdrom eight-one-os.iso
             ```
-          files: |
-            /tmp/archiso-out/*.iso
-            /tmp/archiso-out/*.part
-            /tmp/archiso-out/*.sha256
+          files: /tmp/release-assets/*
           draft: false
           prerelease: false
         env:
