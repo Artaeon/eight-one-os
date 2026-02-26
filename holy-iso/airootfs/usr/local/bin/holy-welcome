@@ -168,7 +168,7 @@ Set a password now to secure your session."
         elif [[ "$PASS1" != "$PASS2" ]]; then
             gum style --foreground "#e74c3c" --margin "0 7" "  Passwords do not match. Try again."
         else
-            echo -e "$PASS1\n$PASS2" | sudo passwd holy > /dev/null 2>&1
+            echo -e "$PASS1\n$PASS2" | sudo passwd "$USER" > /dev/null 2>&1
             echo ""
             gum style --foreground "$GREEN" --margin "0 7" "  Password set successfully."
             password_set=true
@@ -199,13 +199,13 @@ This requires an internet connection and ~500MB of space."
     echo ""
     if gum confirm --prompt.foreground "$GOLD" "  Install Brave Browser now?"; then
         echo ""
-        gum spin --spinner dot --title "  Installing Brave Browser..." -- \
-            flatpak install -y flathub com.brave.Browser 2>/dev/null || {
-                gum style --foreground "#e74c3c" --margin "0 7" \
-                    "  Install failed. You can install later with: holy-browser"
-                sleep 2
-            }
-        gum style --foreground "$GREEN" --margin "0 7" "  Brave Browser installed."
+        if gum spin --spinner dot --title "  Installing Brave Browser..." -- \
+            flatpak install -y flathub com.brave.Browser 2>/dev/null; then
+            gum style --foreground "$GREEN" --margin "0 7" "  Brave Browser installed."
+        else
+            gum style --foreground "#e74c3c" --margin "0 7" \
+                "  Install failed. You can install later with: holy-browser"
+        fi
         sleep 1
     else
         echo ""
