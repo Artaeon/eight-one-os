@@ -41,10 +41,7 @@ esac
 pkill -f "mpv --no-video" 2>/dev/null
 
 echo "Starting stream... (this may take a moment)"
-if ! mpv --no-video --really-quiet "$url" &>/dev/null & then
-    echo "Error: Failed to start playback. The stream may be unavailable."
-    exit 1
-fi
+mpv --no-video --really-quiet "$url" &>/dev/null &
 disown
 
 echo "Vibes activated. Run 'holy-vibes' and choose 4 to stop."
