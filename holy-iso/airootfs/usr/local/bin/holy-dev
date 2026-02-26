@@ -88,7 +88,7 @@ EOF
         echo -e "${GREEN}✓ Python project initialized with venv${RESET}"
         ;;
     *"Go"*)
-        local go_module
+        go_module=""
         go_module=$(gum input --placeholder "Go module name (e.g., github.com/user/project)" --value "github.com/$USER/$PROJECT_NAME" --width 60)
         go mod init "$go_module" 2>/dev/null
         cat > main.go << 'GOEOF'
