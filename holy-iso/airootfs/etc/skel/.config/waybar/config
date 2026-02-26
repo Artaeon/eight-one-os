@@ -59,21 +59,24 @@
     },
     "custom/sabbath": {
         "exec": "/usr/local/bin/holy-sabbath",
+        "exec-if": "which holy-sabbath",
         "return-type": "json",
         "interval": 3600,
-        "format": "🕊️ {}"
+        "format": "{}"
     },
     "custom/flow": {
         "exec": "/usr/local/bin/holy-flow waybar",
+        "exec-if": "which holy-flow",
         "return-type": "json",
         "interval": 5,
-        "on-click": "kitty --title 'Holy Flow' /usr/local/bin/holy-flow tui"
+        "on-click": "kitty --title 'Holy Flow' -e /usr/local/bin/holy-flow tui"
     },
     "custom/intent": {
         "exec": "/usr/local/bin/holy-intent waybar",
+        "exec-if": "which holy-intent",
         "return-type": "json",
         "interval": 60,
-        "on-click": "kitty --title 'Holy Intent' /usr/local/bin/holy-intent set"
+        "on-click": "kitty --title 'Holy Intent' -e /usr/local/bin/holy-intent set"
     },
     "cpu": {
         "format": "  {usage}%",
@@ -108,14 +111,14 @@
         "format-linked": "󰈀 {ifname}",
         "format-disconnected": "󰤭 Offline",
         "tooltip-format": "{ifname}: {ipaddr}/{cidr}",
-        "on-click": "kitty --title 'Holy WiFi' /usr/local/bin/holy-wifi"
+        "on-click": "kitty --title 'Holy WiFi' -e /usr/local/bin/holy-wifi"
     },
     "bluetooth": {
         "format": "󰂯 {status}",
         "format-connected": "󰂱 {device_alias}",
         "format-disabled": "󰂲",
         "tooltip-format": "{controller_alias}\n{num_connections} connected",
-        "on-click": "kitty --title 'Holy Bluetooth' /usr/local/bin/holy-bluetooth"
+        "on-click": "kitty --title 'Holy Bluetooth' -e /usr/local/bin/holy-bluetooth"
     },
     "backlight": {
         "format": "󰃟 {percent}%",

@@ -1,7 +1,7 @@
 /* EIGHT.ONE OS — Premium Waybar Theme */
 /* Glassmorphism Dark with Gold Accents */
 
-@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap");
+/* Font loaded via system ttf-jetbrains-mono-nerd package — no @import needed */
 
 * {
     border: none;
