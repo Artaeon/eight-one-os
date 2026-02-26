@@ -45,25 +45,11 @@ alias gs='git s'
 alias gc='git commit'
 alias gp='git push'
 alias gl='git lg'
-# Ensure user is ready
-if [ -z "$DISPLAY" ] && [ -z "$WAYLAND_DISPLAY" ] && [ "$XDG_VTNR" = 1 ]; then
-    if [ ! -f "$HOME/.welcome_done" ]; then
-        holy-welcome
-    fi
-fi
+# Welcome wizard is now triggered via Hyprland exec-once autostart
 
 # Show Fastfetch system info once setup is complete
 if [ -f "$HOME/.welcome_done" ]; then
     fastfetch
-fi
-
-# Start Hyprland on TTY1 if not already running
-if [ -z "$DISPLAY" ] && [ -z "$WAYLAND_DISPLAY" ] && [ "$XDG_VTNR" = 1 ]; then
-    echo -e "\n${YELLOW}Press ENTER to launch Hyprland desktop, or type 'skip' to stay in terminal:${RESET}"
-    read -r choice
-    if [ "$choice" != "skip" ]; then
-        start-hyprland
-    fi
 fi
 
 # Zsh Plugins (Arch Linux packages)
