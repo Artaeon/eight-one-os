@@ -10,34 +10,37 @@
 
 ---
 
-EIGHT.ONE OS is an opinionated Arch Linux distribution built with `archiso`. It ships a complete Hyprland desktop, an AI-integrated IDE, and 21 custom TUI utilities — all configured and themed out of the box. No post-install configuration required.
+EIGHT.ONE OS is an opinionated Arch Linux distribution built with `archiso`. It ships a complete Hyprland desktop, an AI-integrated IDE, and 26 custom TUI utilities — all configured and themed out of the box. No post-install configuration required. Targets the Matebook (Ryzen 3500U, 8GB RAM) with aggressive power and memory optimization.
 
 ## Overview
 
 | Component | Choice |
 |-----------|--------|
-| Compositor | Hyprland (Wayland) |
+| Compositor | Hyprland (Wayland) with VFR + VRR |
 | Terminal | Kitty |
 | Shell | Zsh + Starship prompt |
 | Editor | Neovim (LazyVim) + VS Code (EIGHT.ONE Gold) |
 | Launcher | Fuzzel |
-| Bar | Waybar |
+| Bar | Waybar (glassmorphism, gold accents) |
 | Notifications | Mako |
 | File Manager | Yazi |
 | Multiplexer | Zellij / Tmux |
-| Lock Screen | Hyprlock |
-| Idle Manager | Hypridle |
-| Login | greetd (auto-login) |
+| Lock Screen | Hyprlock (screenshot blur + gold UI) |
+| Idle Manager | Hypridle (dim → lock → DPMS → suspend) |
+| Login | greetd (auto-login via start-hyprland) |
+| Wallpaper | Hyprpaper (dark + gold geometric) |
 | Package Manager | pacman (color, parallel downloads) |
 
 ## Features
 
 ### Desktop Environment
-- Unified dark theme with gold accents across GTK3, GTK4, QT5, Kitty, Fuzzel, Mako, and Waybar
-- Glassmorphism Waybar with Bluetooth, backlight, recording indicator, and system metrics
-- Hyprlock lockscreen with solid dark background
-- Hypridle with progressive power saving (dim, lock, display off, suspend)
-- Papirus-Dark icon theme, JetBrainsMono Nerd Font
+- Unified dark theme with gold accents (#d4af37) across GTK3, GTK4, QT5, Kitty, Fuzzel, Mako, and Waybar
+- Glassmorphism Waybar with Bluetooth, backlight, recording indicator, system metrics, and help module
+- Matrix-gold GRUB theme with binary rain aesthetic and gold-glow selected entries
+- Hyprlock lockscreen with screenshot blur, gold input field, and Bible verse display
+- Hypridle with progressive power saving (dim → lock → display off → suspend)
+- Plymouth boot animation with custom EIGHT.ONE theme
+- Papirus-Dark icon theme, JetBrainsMono Nerd Font everywhere
 
 ### Developer Toolkit
 - **Neovim** with LazyVim — LSP for Go, TypeScript, Python, Rust, Docker, YAML, Tailwind
@@ -52,58 +55,91 @@ EIGHT.ONE OS is an opinionated Arch Linux distribution built with `archiso`. It 
 - **Cline** — Claude-powered AI pair programmer (VS Code extension)
 - **Claude Code CLI** — Anthropic's terminal AI coding assistant
 - **Gemini CLI** — Google's terminal AI assistant
-- **Ollama** — local AI inference (pre-configured, runs as background service)
+- **Ollama** — local AI inference (disabled at boot, starts on-demand via holy-ai)
+
+### Performance & Battery
+- **VFR + VRR** — variable frame rate and adaptive sync for battery savings
+- **TLP** — AMD Ryzen-optimized power management with AMDGPU settings
+- **zram** — 50% RAM compressed swap (zstd), effective ~12GB on 8GB system
+- **earlyoom** — kills memory hogs before system freezes (prefers browser tabs)
+- **Kernel tuning** — swappiness=10, BBR TCP, inotify limits for IDEs
+- **Blur/shadows disabled** — Hyprland runs lean on integrated GPU
+- **Ollama disabled at boot** — starts on-demand to save ~300MB idle RAM
 
 ### Custom Utilities
 
-EIGHT.ONE ships 21 custom scripts accessible from the terminal or the `holy-settings` TUI menu:
+EIGHT.ONE ships 26 custom scripts accessible from the terminal, Waybar, or the command palette (`Ctrl+Super+Space`):
 
 | Utility | Description |
 |---------|-------------|
 | `holy-settings` | Central TUI settings menu |
+| `holy-menu` | Command palette with 45+ actions |
 | `holy-ai` | Local AI assistant via Ollama |
 | `holy-bible` | Keyboard-driven Bible search |
+| `holy-keys` | Keyboard shortcut reference |
 | `holy-wifi` | WiFi manager with signal bars (nmcli) |
 | `holy-bluetooth` | Bluetooth scan/pair/connect (bluetoothctl) |
 | `holy-display` | Monitor resolution/scale/toggle (wlr-randr) |
 | `holy-ssh` | SSH key generator with clipboard copy |
 | `holy-record` | Screen recording toggle (wf-recorder) |
 | `holy-clip` | Clipboard history manager (cliphist) |
-| `holy-flow` | Pomodoro-style focus timer |
+| `holy-flow` | Pomodoro-style focus timer with Waybar integration |
 | `holy-focus` | Distraction blocker (modifies /etc/hosts) |
 | `holy-vibes` | Background audio (lo-fi, ambient, chants) |
 | `holy-sabbath` | Sunday rest reminder (Waybar module) |
 | `holy-intent` | Daily intention setter |
 | `holy-dash` | Project dashboard |
-| `holy-dev` | Project scaffolding |
+| `holy-dev` | Project scaffolding (Rust, Node, Python, Go) |
 | `holy-git` | Git workflow helper |
-| `holy-install` | Guided Arch installer |
-| `holy-welcome` | First-boot setup wizard |
+| `holy-install` | Guided Arch installer (archinstall) |
+| `holy-welcome` | 7-step premium onboarding wizard |
 | `holy-ide` | AI-integrated VS Code with first-run setup |
 | `holy-aur` | Self-bootstrapping AUR helper (paru) |
+| `holy-browser` | Brave Browser via Flatpak auto-installer |
+| `holy-notify` | Notification history viewer |
 | `eightone-update` | 3-channel system updater (pacman, scripts, AUR) |
 
 ### Keyboard Shortcuts
 
+Every binding is unique — no conflicts.
+
 | Shortcut | Action |
 |----------|--------|
-| `Super + Enter` | Terminal |
-| `Super + Space` | App Launcher |
+| `Super + Enter` | Terminal (Kitty) |
+| `Super + Space` | App Launcher (Fuzzel) |
+| `Ctrl+Super + Space` | Command Palette (holy-menu) |
 | `Super + Q` | Close Window |
-| `Super + L` | Lock Screen |
-| `Super + A` | AI Assistant |
+| `Super + Escape` | Lock Screen |
+| `Super + A` | AI Assistant (holy-ai) |
+| `Super + B` | Browser (Brave) |
+| `Super + Shift+B` | Bible Search (holy-bible) |
 | `Super + C` | IDE (VS Code) |
-| `Super + B` | Bible Search |
-| `Super + T` | Zellij Terminal |
-| `Super + E` | File Manager |
+| `Super + D` | Project Dashboard (holy-dash) |
+| `Super + Shift+D` | New Project (holy-dev) |
+| `Super + E` | File Manager (Yazi) |
+| `Super + N` | Notifications (holy-notify) |
+| `Super + O` | Obsidian Notes |
+| `Super + T` | Zellij Multiplexer |
+| `Super + W` | Flow Timer (holy-flow) |
+| `Super + Shift+W` | Builder Mode (holy-focus) |
+| `Super + Shift+A` | AI Chat (holy-ai TUI) |
+| `Super + V` | Clipboard History |
 | `Super + S` | Screenshot (area) |
 | `Super + Shift+S` | Screenshot (full) |
-| `Super + Shift+R` | Toggle Recording |
-| `Super + V` | Clipboard History |
-| `Super + ,` | Settings Menu |
-| `Super + D` | Project Dashboard |
+| `Super + Shift+R` | Toggle Screen Recording |
+| `Super + ,` | Settings (holy-settings) |
+| `Super + /` | Shortcut Reference (holy-keys) |
+| `Super + F` | Fullscreen |
+| `Super + Shift+F` | Toggle Floating |
+| `Super + P` | Pseudo-tile |
+| `Super + ;` | Toggle Split |
+| `Super + Shift+E` | Exit Hyprland |
 | `Super + H/J/K/L` | Focus (vim-style) |
+| `Super + Shift+H/J/K/L` | Move Window |
+| `Super + Ctrl+H/J/K/L` | Resize Window |
 | `Super + 1-9` | Switch Workspace |
+| `Super + Shift+1-9` | Move Window to Workspace |
+| `Super + `` ` | Toggle Scratchpad |
 
 ## Building
 
@@ -147,13 +183,17 @@ sudo dd bs=4M if=out/eight-one-os-*.iso of=/dev/sdX status=progress oflag=sync
 
 ```
 holy-iso/
-  packages.x86_64               All packages included in the ISO
+  packages.x86_64               All packages (organized by category)
   profiledef.sh                  Build profile and file permissions
   airootfs/
     etc/
-      greetd/config.toml         Auto-login configuration
+      greetd/config.toml         Auto-login → /usr/local/bin/start-hyprland
+      default/grub               GRUB config with EIGHT.ONE theme
+      default/earlyoom           OOM killer configuration
+      tlp.conf                   TLP power management (AMD Ryzen optimized)
+      sysctl.d/99-eightone.conf  Kernel tuning (memory, network, I/O)
+      systemd/zram-generator.conf  Compressed swap (zstd, 50% RAM)
       pacman.conf                Pacman with color and parallel downloads
-      motd                       Login banner
       skel/
         .config/
           hypr/                  Hyprland, Hyprlock, Hyprpaper, Hypridle
@@ -170,8 +210,14 @@ holy-iso/
         .gitconfig               Git aliases and delta config
         .tmux.conf               Tmux gold theme
         .zshrc                   Shell configuration
-    usr/local/bin/
-      holy-*                     19 custom TUI utilities
+        wallpaper.png            Desktop wallpaper (dark + gold)
+    usr/
+      local/bin/
+        start-hyprland           Session launcher (env vars, VM detection)
+        holy-*                   26 custom TUI utilities
+      share/
+        grub/themes/eightone/    Matrix-gold GRUB theme
+        plymouth/themes/eightone/ Boot animation
 ```
 
 ## License
