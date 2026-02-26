@@ -48,7 +48,7 @@ update_scripts() {
         if [ "$remote_hash" != "$local_hash" ] && [ -n "$remote_hash" ] && [ "$remote_hash" != "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" ]; then
             echo -e "  ${GOLD}↑${RESET} Updating ${name}..."
             sudo curl -sL "$url" -o "$script" && sudo chmod 755 "$script"
-            ((updated++))
+            updated=$((updated + 1))
         fi
     done
 
