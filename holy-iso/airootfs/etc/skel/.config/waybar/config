@@ -133,6 +133,10 @@
         "on-click": "holy-record toggle"
     },
     "battery": {
+        "states": {
+            "warning": 20,
+            "critical": 10
+        },
         "format": "{icon} {capacity}%",
         "format-icons": [
             "󰂎",
@@ -147,7 +151,9 @@
             "󰂂",
             "󰁹"
         ],
-        "format-charging": "󰂄 {capacity}%"
+        "format-charging": "󰂄 {capacity}%",
+        "format-warning": "󰁻 {capacity}%",
+        "format-critical": "󰂎 {capacity}%"
     },
     "custom/help": {
         "format": "󰞋",
