@@ -1,0 +1,90 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# EIGHT.ONE OS — Keyboard Shortcut Reference
+# Displays all keybindings in a formatted table
+
+GOLD="\e[33m"
+CYAN="\e[36m"
+WHITE="\e[97m"
+DIM="\e[2m"
+BOLD="\e[1m"
+RESET="\e[0m"
+
+clear
+
+echo -e "${GOLD}${BOLD}"
+echo "  ╔══════════════════════════════════════════════════════════════╗"
+echo "  ║              EIGHT.ONE OS — Keyboard Shortcuts              ║"
+echo "  ╚══════════════════════════════════════════════════════════════╝"
+echo -e "${RESET}"
+
+echo -e "${CYAN}${BOLD}  ── Apps ──${RESET}"
+echo -e "  ${WHITE}Super + Enter${RESET}          Terminal (Kitty)"
+echo -e "  ${WHITE}Super + Space${RESET}          App Launcher (Fuzzel)"
+echo -e "  ${WHITE}Ctrl+Super + Space${RESET}     Command Palette (holy-menu)"
+echo -e "  ${WHITE}Super + A${RESET}              AI Assistant (holy-ai)"
+echo -e "  ${WHITE}Super + B${RESET}              Browser (Brave)"
+echo -e "  ${WHITE}Super + Shift+B${RESET}        Bible Search (holy-bible)"
+echo -e "  ${WHITE}Super + C${RESET}              IDE (VS Code)"
+echo -e "  ${WHITE}Super + E${RESET}              File Manager (Yazi)"
+echo -e "  ${WHITE}Super + O${RESET}              Obsidian Notes"
+echo -e "  ${WHITE}Super + T${RESET}              Multiplexer (Zellij)"
+echo -e "  ${WHITE}Super + ,${RESET}              Settings (holy-settings)"
+echo ""
+
+echo -e "${CYAN}${BOLD}  ── Builder Tools ──${RESET}"
+echo -e "  ${WHITE}Super + D${RESET}              Project Dashboard (holy-dash)"
+echo -e "  ${WHITE}Super + Shift+D${RESET}        New Project (holy-dev)"
+echo -e "  ${WHITE}Super + N${RESET}              Notifications (holy-notify)"
+echo -e "  ${WHITE}Super + Shift+A${RESET}        AI Chat (holy-ai)"
+echo -e "  ${WHITE}Super + W${RESET}              Flow Timer (holy-flow)"
+echo -e "  ${WHITE}Super + Shift+W${RESET}        Builder Mode (holy-focus)"
+echo ""
+
+echo -e "${CYAN}${BOLD}  ── Utilities ──${RESET}"
+echo -e "  ${WHITE}Super + Escape${RESET}         Lock Screen"
+echo -e "  ${WHITE}Super + S${RESET}              Screenshot (area)"
+echo -e "  ${WHITE}Super + Shift+S${RESET}        Screenshot (full)"
+echo -e "  ${WHITE}Super + Shift+R${RESET}        Toggle Screen Recording"
+echo -e "  ${WHITE}Super + V${RESET}              Clipboard History"
+echo -e "  ${WHITE}Super + /${RESET}              This Shortcut Reference"
+echo ""
+
+echo -e "${CYAN}${BOLD}  ── Window Management ──${RESET}"
+echo -e "  ${WHITE}Super + Q${RESET}              Close Window"
+echo -e "  ${WHITE}Super + F${RESET}              Fullscreen"
+echo -e "  ${WHITE}Super + Shift+F${RESET}        Toggle Floating"
+echo -e "  ${WHITE}Super + P${RESET}              Pseudo-tile"
+echo -e "  ${WHITE}Super + ;${RESET}              Toggle Split"
+echo -e "  ${WHITE}Super + Shift+E${RESET}        Exit Hyprland"
+echo ""
+
+echo -e "${CYAN}${BOLD}  ── Focus (vim-style) ──${RESET}"
+echo -e "  ${WHITE}Super + H/J/K/L${RESET}        Move Focus (left/down/up/right)"
+echo -e "  ${WHITE}Super + Shift+H/J/K/L${RESET}  Move Window"
+echo -e "  ${WHITE}Super + Ctrl+H/J/K/L${RESET}   Resize Window"
+echo -e "  ${WHITE}Super + Arrow Keys${RESET}      Move Focus (arrow keys)"
+echo ""
+
+echo -e "${CYAN}${BOLD}  ── Workspaces ──${RESET}"
+echo -e "  ${WHITE}Super + 1-9${RESET}            Switch to Workspace"
+echo -e "  ${WHITE}Super + Shift+1-9${RESET}      Move Window to Workspace"
+echo -e "  ${WHITE}Super + \`${RESET}               Toggle Scratchpad"
+echo -e "  ${WHITE}Super + Shift+\`${RESET}        Move to Scratchpad"
+echo ""
+
+echo -e "${CYAN}${BOLD}  ── Mouse ──${RESET}"
+echo -e "  ${WHITE}Super + Left Click${RESET}     Move Window"
+echo -e "  ${WHITE}Super + Right Click${RESET}    Resize Window"
+echo ""
+
+echo -e "${DIM}  Press q to exit${RESET}"
+
+# Wait for user to press q or Enter
+while true; do
+    read -rsn1 key
+    if [[ "$key" == "q" || "$key" == "" ]]; then
+        break
+    fi
+done

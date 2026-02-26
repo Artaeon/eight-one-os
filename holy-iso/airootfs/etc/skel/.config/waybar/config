@@ -26,6 +26,7 @@
         "memory",
         "disk",
         "battery",
+        "custom/help",
         "tray"
     ],
     "hyprland/workspaces": {
@@ -147,6 +148,11 @@
             "󰁹"
         ],
         "format-charging": "󰂄 {capacity}%"
+    },
+    "custom/help": {
+        "format": "󰞋",
+        "tooltip": "Keyboard Shortcuts (Super+/)",
+        "on-click": "kitty --title 'Holy Keys' -e /usr/local/bin/holy-keys"
     },
     "tray": {
         "icon-size": 16,
