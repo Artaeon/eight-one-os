@@ -170,6 +170,9 @@ tooltip {
     padding: 0 12px;
     margin: 4px 2px;
     border-radius: 12px;
+}
+
+#custom-recording.recording {
     background: rgba(231, 76, 60, 0.15);
     animation: blink 1s infinite;
 }
