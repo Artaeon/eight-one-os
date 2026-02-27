@@ -42,6 +42,11 @@ echo -e "  ${WHITE}Super + W${RESET}              Flow Timer (holy-flow)"
 echo -e "  ${WHITE}Super + Shift+W${RESET}        Builder Mode (holy-focus)"
 echo ""
 
+echo -e "${CYAN}${BOLD}  ── Extra Tools ──${RESET}"
+echo -e "  ${WHITE}Super + Shift+V${RESET}        Voice Dictation Toggle"
+echo -e "  ${WHITE}Super + Shift+X${RESET}        Windows VM (holy-windows)"
+echo ""
+
 echo -e "${CYAN}${BOLD}  ── Utilities ──${RESET}"
 echo -e "  ${WHITE}Super + Escape${RESET}         Lock Screen"
 echo -e "  ${WHITE}Super + X${RESET}              Power Menu (holy-power)"
@@ -66,7 +71,6 @@ echo -e "  ${WHITE}Super + H/J/K/L${RESET}        Move Focus (left/down/up/right
 echo -e "  ${WHITE}Super + Shift+H/J/K/L${RESET}  Move Window"
 echo -e "  ${WHITE}Super + Ctrl+H/J/K/L${RESET}   Resize Window"
 echo -e "  ${WHITE}Super + Arrow Keys${RESET}      Move Focus (arrow keys)"
-echo -e "  ${WHITE}3-Finger Swipe${RESET}         Switch Workspace (touchpad)"
 echo ""
 
 echo -e "${CYAN}${BOLD}  ── Workspaces ──${RESET}"
