@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# EIGHT.ONE OS — Quick Project Opener
+# Scans ~/Projects for git repos, fuzzy-picks one via fuzzel, opens in terminal
+
+PROJECTS_DIR="$HOME/Projects"
+
+# Find all git repos (max 4 levels deep)
+mapfile -t repos < <(find "$PROJECTS_DIR" -maxdepth 4 -name ".git" -type d 2>/dev/null | sed 's|/.git$||' | sort)
+
+if [[ ${#repos[@]} -eq 0 ]]; then
+    notify-send -a "Holy Project" "No git repos found in ~/Projects" -t 3000
+    exit 0
+fi
+
+# Build display list: "relative/path (branch)"
+entries=""
+for repo in "${repos[@]}"; do
+    rel="${repo#"$PROJECTS_DIR"/}"
+    branch=$(git -C "$repo" branch --show-current 2>/dev/null || echo "?")
+    entries+="${rel}  [${branch}]"$'\n'
+done
+
+# Fuzzel picker
+selected=$(echo -n "$entries" | fuzzel --dmenu \
+    --prompt="  " \
+    --width=50 \
+    --lines=15 \
+    --horizontal-pad=20 \
+    --vertical-pad=12 \
+    --inner-pad=8 \
+    --border-width=2 \
+    --border-radius=0 \
+    --border-color=d4af37ff \
+    --background=0a0a0fee \
+    --text-color=e8e6dfff \
+    --match-color=d4af37ff \
+    --selection-color=d4af3733 \
+    --selection-text-color=d4af37ff \
+    --font="JetBrainsMono Nerd Font:size=12")
+
+[[ -z "$selected" ]] && exit 0
+
+# Extract path (strip branch info)
+project_name=$(echo "$selected" | sed 's/  \[.*$//')
+project_path="$PROJECTS_DIR/$project_name"
+
+if [[ -d "$project_path" ]]; then
+    kitty --detach --directory "$project_path" -e zsh
+fi
