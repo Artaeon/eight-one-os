@@ -1,0 +1,182 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# EIGHT.ONE OS — Holy Dictate (Voice-to-Text for Wayland)
+# Uses nerd-dictation with VOSK for offline speech recognition
+# Pipes recognized text into the focused window via wtype
+
+GOLD="#d4af37"
+WHITE="#e8e6df"
+DIM="#595959"
+RED="#e74c3c"
+GREEN="#2ecc71"
+
+DICTATION_PID_FILE="/tmp/holy-dictate.pid"
+NERD_DICTATION_DIR="$HOME/.local/share/holy-dictate"
+VOSK_MODEL_DIR="$NERD_DICTATION_DIR/model"
+VOSK_MODEL_URL="https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip"
+
+# ── Helper: Check if dictation is running ──
+is_running() {
+    [[ -f "$DICTATION_PID_FILE" ]] && kill -0 "$(cat "$DICTATION_PID_FILE")" 2>/dev/null
+}
+
+# ── Toggle Mode (for keybinding) ──
+if [[ "${1:-}" == "toggle" ]]; then
+    if is_running; then
+        # Stop dictation
+        nerd-dictation end 2>/dev/null || true
+        rm -f "$DICTATION_PID_FILE"
+        notify-send -a "Holy Dictate" "Dictation stopped" -t 2000
+    else
+        # Start dictation
+        if [[ ! -d "$VOSK_MODEL_DIR" ]]; then
+            notify-send -a "Holy Dictate" "No voice model installed. Run: holy-dictate" -t 4000
+            exit 1
+        fi
+        nerd-dictation begin \
+            --vosk-model-dir "$VOSK_MODEL_DIR" \
+            --output STDOUT \
+            --continuous \
+            --timeout 30 2>/dev/null | while IFS= read -r line; do
+                wtype "$line "
+            done &
+        echo $! > "$DICTATION_PID_FILE"
+        notify-send -a "Holy Dictate" "Dictation active — speak now" -t 2000
+    fi
+    exit 0
+fi
+
+# ── Interactive TUI ──
+clear
+gum style \
+    --foreground "$GOLD" \
+    --border-foreground "$GOLD" \
+    --border double \
+    --align center \
+    --width 60 \
+    --margin "1 5" \
+    --padding "1 2" \
+    "HOLY DICTATE" \
+    "" \
+    "Voice-to-Text for Wayland" \
+    "Powered by VOSK + nerd-dictation"
+
+echo ""
+
+# ── Check Dependencies ──
+MISSING=()
+command -v nerd-dictation &>/dev/null || MISSING+=("nerd-dictation")
+command -v wtype &>/dev/null || MISSING+=("wtype")
+
+if [[ ${#MISSING[@]} -gt 0 ]]; then
+    gum style --foreground "$RED" --bold --margin "0 5" "Missing dependencies:"
+    echo ""
+    for dep in "${MISSING[@]}"; do
+        gum style --foreground "$DIM" --margin "0 7" "  - $dep"
+    done
+    echo ""
+    gum style --foreground "$WHITE" --margin "0 5" \
+        "Install with:" \
+        "  pip install nerd-dictation" \
+        "  sudo pacman -S wtype"
+    echo ""
+
+    if gum confirm --prompt.foreground "$GOLD" "  Attempt automatic install?"; then
+        echo ""
+        gum spin --spinner dot --title "Installing nerd-dictation via pip..." -- \
+            pipx install nerd-dictation 2>/dev/null || pip install --user nerd-dictation 2>/dev/null || true
+
+        if ! command -v wtype &>/dev/null; then
+            gum spin --spinner dot --title "Installing wtype..." -- \
+                sudo pacman -S --noconfirm wtype 2>/dev/null || true
+        fi
+        echo ""
+    else
+        exit 1
+    fi
+fi
+
+# ── VOSK Model Setup ──
+if [[ ! -d "$VOSK_MODEL_DIR" ]]; then
+    echo ""
+    gum style --foreground "$WHITE" --bold --margin "0 5" \
+        "Voice model not found. Downloading VOSK model (~50MB)..."
+    echo ""
+
+    mkdir -p "$NERD_DICTATION_DIR"
+
+    if gum spin --spinner dot --title "  Downloading voice model..." -- \
+        bash -c "curl -sL '$VOSK_MODEL_URL' -o /tmp/vosk-model.zip && \
+                 unzip -qo /tmp/vosk-model.zip -d '$NERD_DICTATION_DIR' && \
+                 mv '$NERD_DICTATION_DIR'/vosk-model-*/ '$VOSK_MODEL_DIR' && \
+                 rm -f /tmp/vosk-model.zip"; then
+        gum style --foreground "$GREEN" --bold --margin "0 5" "Voice model installed."
+    else
+        gum style --foreground "$RED" --margin "0 5" \
+            "Download failed. Check your internet connection."
+        exit 1
+    fi
+fi
+
+echo ""
+
+# ── Main Menu ──
+if is_running; then
+    gum style --foreground "$GREEN" --bold --margin "0 5" "Dictation is currently ACTIVE."
+    echo ""
+    ACTION=$(gum choose \
+        "Stop dictation" \
+        "Exit" \
+        --cursor.foreground "$GOLD")
+
+    if [[ "$ACTION" == "Stop dictation" ]]; then
+        nerd-dictation end 2>/dev/null || true
+        rm -f "$DICTATION_PID_FILE"
+        gum style --foreground "$DIM" --margin "1 5" "Dictation stopped."
+    fi
+else
+    gum style --foreground "$DIM" --margin "0 5" "Dictation is currently OFF."
+    echo ""
+    ACTION=$(gum choose \
+        "Start dictation (type what you speak)" \
+        "Test microphone" \
+        "Exit" \
+        --cursor.foreground "$GOLD")
+
+    case "$ACTION" in
+        "Start dictation"*)
+            echo ""
+            gum style --foreground "$GOLD" --bold --margin "0 5" \
+                "Starting voice dictation..."
+            gum style --foreground "$DIM" --margin "0 5" \
+                "Speak into your microphone. Text will be typed into the focused window." \
+                "Run 'holy-dictate' again to stop, or use: holy-dictate toggle"
+            sleep 1
+
+            nerd-dictation begin \
+                --vosk-model-dir "$VOSK_MODEL_DIR" \
+                --output STDOUT \
+                --continuous \
+                --timeout 30 2>/dev/null | while IFS= read -r line; do
+                    wtype "$line "
+                done &
+            echo $! > "$DICTATION_PID_FILE"
+
+            gum style --foreground "$GREEN" --bold --margin "1 5" \
+                "Dictation active. Close this terminal or run holy-dictate to stop."
+            ;;
+        "Test microphone"*)
+            echo ""
+            gum style --foreground "$WHITE" --margin "0 5" \
+                "Recording 3 seconds... Speak now!"
+            arecord -d 3 -f S16_LE /tmp/holy-mic-test.wav 2>/dev/null
+            aplay /tmp/holy-mic-test.wav 2>/dev/null
+            rm -f /tmp/holy-mic-test.wav
+            gum style --foreground "$DIM" --margin "1 5" "Test complete."
+            ;;
+        *)
+            exit 0
+            ;;
+    esac
+fi
