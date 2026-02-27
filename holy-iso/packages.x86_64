@@ -166,9 +166,23 @@ terminus-font
 # ── AI ──
 ollama
 
-# ── Media ──
+# ── Media & Creative ──
 mpv
 yt-dlp
+obs-studio
+kdenlive
+
+# ── Office ──
+libreoffice-fresh
+
+# ── Browsers ──
+chromium
+
+# ── Sharing ──
+localsend
+
+# ── Dev Environments ──
+mise
 
 # ── Notes ──
 obsidian
