@@ -1,27 +1,25 @@
-# EIGHT.ONE OS — Mako Notification Daemon Config
-
 sort=-time
 layer=overlay
 anchor=top-right
-width=350
-height=120
-margin=10,10,0,0
-padding=15
-border-size=2
-border-radius=10
-border-color=#d4af37
-background-color=#0a0a0fdd
+width=300
+height=80
+margin=8,8,0,0
+padding=12,16
+border-size=1
+border-radius=0
+border-color=#d4af3766
+background-color=#0a0a0fee
 text-color=#e8e6df
-default-timeout=5000
+default-timeout=4000
 font=JetBrainsMono Nerd Font 11
-max-visible=4
-icon-path=/usr/share/icons/Papirus-Dark
+max-visible=3
 max-history=50
 on-notify=exec echo "$(date +%s)|{summary}|{body}" >> ~/.local/share/mako/history.log
 
 [urgency=high]
-border-color=#e74c3c
-default-timeout=10000
+border-color=#d4af37
+default-timeout=8000
 
 [urgency=low]
-default-timeout=3000
+text-color=#595959
+default-timeout=2000
