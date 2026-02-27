@@ -1,69 +1,86 @@
-# EIGHT.ONE OS — Matrix-Gold GRUB Theme
+# EIGHT.ONE OS — Premium GRUB Theme
+# Matrix palette: #0a0a0f, #d4af37, #e8e6df, #2a2a2a
 
 title-text: ""
 desktop-image: "background.png"
 desktop-color: "#0a0a0f"
-terminal-font: "Unifont Regular 16"
+terminal-font: "JetBrainsMono Nerd Font Regular 16"
 message-color: "#d4af37"
 message-bg-color: "#0a0a0f"
 
+# Title
 + label {
     text = "EIGHT.ONE OS"
-    font = "Unifont Regular 24"
+    font = "JetBrainsMono Nerd Font Regular 24"
     color = "#d4af37"
     align = "center"
-    top = 6%
+    top = 20%
     left = 0
     width = 100%
 }
 
+# Subtitle
 + label {
-    text = "Select an option to continue"
-    font = "Unifont Regular 14"
+    text = "[ Infinity One ]"
+    font = "JetBrainsMono Nerd Font Regular 12"
     color = "#595959"
     align = "center"
-    top = 12%
+    top = 26%
     left = 0
     width = 100%
 }
 
+# Boot menu — centered
 + boot_menu {
     left = 25%
-    top = 30%
+    top = 35%
     width = 50%
-    height = 45%
-    item_font = "Unifont Regular 16"
-    item_color = "#8a8a8a"
-    selected_item_font = "Unifont Regular 16"
-    selected_item_color = "#d4af37"
+    height = 40%
+    item_font = "JetBrainsMono Nerd Font Regular 16"
+    item_color = "#e8e6df"
+    selected_item_font = "JetBrainsMono Nerd Font Regular 16"
+    selected_item_color = "#0a0a0f"
     item_height = 40
-    item_spacing = 10
-    item_padding = 12
+    item_spacing = 8
+    item_padding = 16
     icon_width = 0
     icon_height = 0
     selected_item_pixmap_style = "select_*.png"
+    scrollbar = false
 }
 
+# Timeout progress bar
 + progress_bar {
     id = "__timeout__"
-    left = 30%
-    top = 85%
-    width = 40%
-    height = 16
+    left = 35%
+    top = 82%
+    width = 30%
+    height = 14
     show_text = true
-    font = "Unifont Regular 12"
+    font = "JetBrainsMono Nerd Font Regular 10"
     text_color = "#e8e6df"
     fg_color = "#d4af37"
-    bg_color = "#1a1a2e"
-    border_color = "#2a2a3e"
+    bg_color = "#2a2a2a"
+    border_color = "#2a2a2a"
+}
+
+# Bottom branding
++ label {
+    text = "BTRFS Snapshots available via submenu"
+    font = "JetBrainsMono Nerd Font Regular 10"
+    color = "#595959"
+    align = "center"
+    top = 90%
+    left = 0
+    width = 100%
 }
 
 + label {
     text = "Infinity One"
-    font = "Unifont Regular 12"
-    color = "#595959"
+    font = "JetBrainsMono Nerd Font Regular 10"
+    color = "#2a2a2a"
     align = "center"
-    top = 92%
+    top = 94%
     left = 0
     width = 100%
 }
