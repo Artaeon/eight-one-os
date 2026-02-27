@@ -13,7 +13,7 @@ passwd -d holy
 echo "%wheel ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/wheel
 chmod 440 /etc/sudoers.d/wheel
 
-echo "KEYMAP=us" > /etc/vconsole.conf
+echo "KEYMAP=de-latin1" > /etc/vconsole.conf
 
 cp -aT /etc/skel/ /root/
 chmod 700 /root
