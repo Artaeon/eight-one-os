@@ -15,6 +15,9 @@ GREEN="#2ecc71"
 
 # ── Install State ──
 INSTALL_TIMEZONE=""
+INSTALL_KB_LAYOUT=""
+INSTALL_LOCALE=""
+INSTALL_HOSTNAME=""
 INSTALL_USERNAME=""
 INSTALL_REALNAME=""
 INSTALL_PASSWORD=""
@@ -25,6 +28,7 @@ INSTALL_DRIVE_PATH=""
 CONFIG_FILE="/tmp/eightone_install.json"
 CREDS_FILE="/tmp/eightone_creds.json"
 DISK_LAYOUT_FILE="/tmp/eightone_disk.json"
+REGION_FILE="/home/holy/.eightone_region"
 
 # ── Helpers ──
 header() {
@@ -103,29 +107,125 @@ step_welcome() {
 }
 
 # ═══════════════════════════════════════════════════════════════════
-# STEP 2: TIMEZONE / LOCATION
+# STEP 2: REGION & LANGUAGE
 # ═══════════════════════════════════════════════════════════════════
-step_timezone() {
-    header "STEP 1/5" "Location & Timezone"
+step_region() {
+    header "STEP 1/6" "Region & Language"
+
+    # Load defaults from holy-welcome if available
+    local default_kb="de" default_tz="Europe/Vienna" default_locale="de_DE"
+    if [[ -f "$REGION_FILE" ]]; then
+        source "$REGION_FILE" 2>/dev/null || true
+        [[ -n "${KB_LAYOUT:-}" ]] && default_kb="$KB_LAYOUT"
+        [[ -n "${TIMEZONE:-}" ]] && default_tz="$TIMEZONE"
+        [[ -n "${LOCALE:-}" ]] && default_locale="$LOCALE"
+
+        gum style --foreground "$DIM" --margin "0 7" \
+            "Settings from your live session were detected."
+        echo ""
+    fi
 
     gum style --foreground "$WHITE" --margin "0 7" \
-        "Select your timezone. Start typing to filter."
+        "Configure keyboard, timezone, and language for the installed system."
+
+    # ── Keyboard Layout ──
+    echo ""
+    gum style --foreground "$GOLD" --bold --margin "0 7" "Keyboard Layout (current: $default_kb):"
     echo ""
 
-    # Build timezone list from system zoneinfo
+    INSTALL_KB_LAYOUT=$(gum choose \
+        "de  — German" \
+        "us  — English (US)" \
+        "gb  — English (UK)" \
+        "fr  — French" \
+        "es  — Spanish" \
+        "it  — Italian" \
+        "pt  — Portuguese" \
+        "br  — Portuguese (Brazil)" \
+        "nl  — Dutch" \
+        "pl  — Polish" \
+        "ru  — Russian" \
+        "se  — Swedish" \
+        "no  — Norwegian" \
+        "dk  — Danish" \
+        "fi  — Finnish" \
+        "ch  — Swiss" \
+        "at  — Austrian" \
+        "be  — Belgian" \
+        "jp  — Japanese" \
+        "kr  — Korean" \
+        --cursor.foreground "$GOLD" \
+        --height 12 \
+        --header "  Select keyboard layout:")
+
+    INSTALL_KB_LAYOUT=$(echo "$INSTALL_KB_LAYOUT" | awk '{print $1}')
+    gum style --foreground "$GREEN" --margin "0 7" "  Keyboard: $INSTALL_KB_LAYOUT"
+
+    # ── Timezone ──
+    echo ""
+    gum style --foreground "$GOLD" --bold --margin "0 7" "Timezone (current: $default_tz):"
+    echo ""
+
     INSTALL_TIMEZONE=$(find /usr/share/zoneinfo/posix -type f 2>/dev/null \
         | sed 's|/usr/share/zoneinfo/posix/||' \
         | sort \
         | gum filter \
-            --height 20 \
+            --height 15 \
             --prompt "  Timezone: " \
             --prompt.foreground "$GOLD" \
             --indicator.foreground "$GOLD" \
+            --value "$default_tz" \
             --placeholder "Type to search (e.g. Europe/Vienna)..." \
         || echo "UTC")
 
-    echo ""
     gum style --foreground "$GREEN" --margin "0 7" "  Timezone: $INSTALL_TIMEZONE"
+
+    # ── Language / Locale ──
+    echo ""
+    gum style --foreground "$GOLD" --bold --margin "0 7" "System Language (current: $default_locale):"
+    echo ""
+
+    INSTALL_LOCALE=$(gum choose \
+        "de_DE  — Deutsch" \
+        "en_US  — English (US)" \
+        "en_GB  — English (UK)" \
+        "fr_FR  — Francais" \
+        "es_ES  — Espanol" \
+        "it_IT  — Italiano" \
+        "pt_BR  — Portugues (Brasil)" \
+        "pt_PT  — Portugues (Portugal)" \
+        "nl_NL  — Nederlands" \
+        "pl_PL  — Polski" \
+        "ru_RU  — Russkij" \
+        "sv_SE  — Svenska" \
+        "nb_NO  — Norsk" \
+        "da_DK  — Dansk" \
+        "fi_FI  — Suomi" \
+        "ja_JP  — Nihongo" \
+        "ko_KR  — Hangugeo" \
+        "zh_CN  — Zhongwen" \
+        --cursor.foreground "$GOLD" \
+        --height 12 \
+        --header "  Select language:")
+
+    INSTALL_LOCALE=$(echo "$INSTALL_LOCALE" | awk '{print $1}')
+    gum style --foreground "$GREEN" --margin "0 7" "  Language: $INSTALL_LOCALE"
+
+    # ── Hostname ──
+    echo ""
+    gum style --foreground "$GOLD" --bold --margin "0 7" "Hostname:"
+    echo ""
+
+    INSTALL_HOSTNAME=$(gum input \
+        --prompt "  Hostname: " \
+        --prompt.foreground "$GOLD" \
+        --placeholder "e.g. eightone, my-dev-machine" \
+        --value "eightone" \
+        --width 40)
+
+    [[ -z "$INSTALL_HOSTNAME" ]] && INSTALL_HOSTNAME="eightone"
+    gum style --foreground "$GREEN" --margin "0 7" "  Hostname: $INSTALL_HOSTNAME"
+
     sleep 0.5
 }
 
@@ -133,7 +233,7 @@ step_timezone() {
 # STEP 3: USER CREATION
 # ═══════════════════════════════════════════════════════════════════
 step_user() {
-    header "STEP 2/5" "User Account"
+    header "STEP 2/6" "User Account"
 
     gum style --foreground "$WHITE" --margin "0 7" \
         "Create your user account for the installed system."
@@ -201,7 +301,7 @@ step_user() {
 # STEP 4: DISK ENCRYPTION
 # ═══════════════════════════════════════════════════════════════════
 step_encryption() {
-    header "STEP 3/5" "Security — Disk Encryption"
+    header "STEP 3/6" "Security — Disk Encryption"
 
     gum style --foreground "$WHITE" --margin "0 7" \
         "Full disk encryption (LUKS) protects your data if the" \
@@ -249,7 +349,7 @@ step_encryption() {
 # STEP 5: DRIVE SELECTION
 # ═══════════════════════════════════════════════════════════════════
 step_drive() {
-    header "STEP 4/5" "Target Drive"
+    header "STEP 4/6" "Target Drive"
 
     gum style --foreground "$WHITE" --margin "0 7" \
         "Select the drive to install EIGHT.ONE OS onto." \
@@ -301,12 +401,15 @@ step_drive() {
 # STEP 6: CONFIRMATION & INSTALL
 # ═══════════════════════════════════════════════════════════════════
 step_confirm_and_install() {
-    header "STEP 5/5" "Confirm & Install"
+    header "STEP 5/6" "Confirm & Install"
 
     gum style --foreground "$WHITE" --bold --margin "0 7" "Installation Summary:"
     echo ""
     gum style --foreground "$WHITE" --margin "0 9" \
+        "  Keyboard:    $INSTALL_KB_LAYOUT" \
+        "  Language:    $INSTALL_LOCALE" \
         "  Timezone:    $INSTALL_TIMEZONE" \
+        "  Hostname:    $INSTALL_HOSTNAME" \
         "  Username:    $INSTALL_USERNAME" \
         "  Full Name:   $INSTALL_REALNAME" \
         "  Encryption:  $([ "$INSTALL_LUKS" = "true" ] && echo "LUKS Enabled" || echo "None")" \
@@ -424,12 +527,12 @@ CREDEOF
         "config_type": "default_layout",
         "device_modifications": []
     },
-    "hostname": "eightone",
+    "hostname": "$INSTALL_HOSTNAME",
     "kernels": ["linux"],
     "locale_config": {
-        "kb_layout": "us",
+        "kb_layout": "$INSTALL_KB_LAYOUT",
         "sys_enc": "UTF-8",
-        "sys_lang": "en_US"
+        "sys_lang": "$INSTALL_LOCALE"
     },
     "mirror_config": {
         "custom_mirrors": [],
@@ -597,6 +700,26 @@ post_install() {
         arch-chroot "$mount_root" chfn -f "$INSTALL_REALNAME" "$INSTALL_USERNAME" 2>/dev/null || true
     fi
 
+    # Apply keyboard layout to Hyprland config
+    local hypr_conf="$user_home/.config/hypr/hyprland.conf"
+    if [[ -f "$hypr_conf" ]]; then
+        sed -i "s/kb_layout = .*/kb_layout = $INSTALL_KB_LAYOUT/" "$hypr_conf" 2>/dev/null || true
+        gum style --foreground "$DIM" --margin "0 9" "  Applied keyboard layout: $INSTALL_KB_LAYOUT"
+    fi
+
+    # Set console keymap
+    echo "KEYMAP=$INSTALL_KB_LAYOUT" > "$mount_root/etc/vconsole.conf" 2>/dev/null || true
+
+    # Configure locale
+    local locale_full="${INSTALL_LOCALE}.UTF-8"
+    arch-chroot "$mount_root" bash -c "
+        sed -i 's/^#\(${locale_full}\)/\1/' /etc/locale.gen 2>/dev/null || true
+        sed -i 's/^#\(en_US.UTF-8\)/\1/' /etc/locale.gen 2>/dev/null || true
+        locale-gen 2>/dev/null || true
+        echo 'LANG=${locale_full}' > /etc/locale.conf
+    " 2>/dev/null || true
+    gum style --foreground "$DIM" --margin "0 9" "  Configured locale: $locale_full"
+
     gum style --foreground "$GREEN" --bold --margin "1 7" "  Post-install customization complete."
 }
 
@@ -631,7 +754,7 @@ step_complete() {
     gum style --foreground "$DIM" --margin "0 9" \
         "  GRUB bootloader with Matrix gold theme" \
         "  BTRFS with snapshots (accessible from GRUB)" \
-        "  Hyprland desktop with full config" \
+        "  Hyprland desktop ($INSTALL_KB_LAYOUT layout, $INSTALL_LOCALE)" \
         "  All holy-* developer tools" \
         "  NetworkManager, Docker, Bluetooth" \
         "  Zsh with Starship + mise dev environments"
@@ -663,7 +786,7 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 step_welcome
-step_timezone
+step_region
 step_user
 step_encryption
 step_drive
