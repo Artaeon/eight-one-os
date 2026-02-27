@@ -70,6 +70,9 @@ source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zs
 # Zoxide (smart cd)
 eval "$(zoxide init zsh)" 2>/dev/null
 
+# Mise (dev environment manager — Ruby, Node, PHP, Python, etc.)
+eval "$(mise activate zsh)" 2>/dev/null
+
 # Builder's daily intention (only in Hyprland session)
 if [ -n "$WAYLAND_DISPLAY" ]; then
     holy-intent check 2>/dev/null
