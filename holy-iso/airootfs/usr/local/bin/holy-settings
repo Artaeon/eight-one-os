@@ -44,7 +44,7 @@ do_install() {
         "📝 Code Editors" \
         "🌐 Browsers" \
         "🎮 Gaming" \
-        "📦 Install from AUR (yay)" \
+        "📦 Install from AUR (paru)" \
         "← Back")
     
     case "$CHOICE" in
