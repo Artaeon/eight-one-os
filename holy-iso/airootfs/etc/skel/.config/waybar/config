@@ -1,15 +1,10 @@
 {
     "layer": "top",
     "position": "top",
-    "height": 36,
-    "margin-top": 6,
-    "margin-left": 10,
-    "margin-right": 10,
+    "height": 28,
     "spacing": 0,
     "modules-left": [
         "hyprland/workspaces",
-        "custom/flow",
-        "custom/intent",
         "hyprland/window"
     ],
     "modules-center": [
@@ -17,120 +12,64 @@
     ],
     "modules-right": [
         "custom/recording",
-        "custom/sabbath",
-        "pulseaudio",
-        "backlight",
-        "bluetooth",
-        "network",
         "cpu",
         "memory",
-        "disk",
         "battery",
-        "custom/help",
+        "pulseaudio",
+        "network",
         "tray"
     ],
     "hyprland/workspaces": {
         "format": "{icon}",
         "format-icons": {
-            "1": "󰲡",
-            "2": "󰲣",
-            "3": "󰲥",
-            "4": "󰲧",
-            "5": "󰲩",
-            "active": "󰮯",
-            "default": "󰊠"
+            "active": "\u25cf",
+            "default": "\u25cb",
+            "occupied": "\u25c9"
         },
-        "on-scroll-up": "hyprctl dispatch workspace e+1",
-        "on-scroll-down": "hyprctl dispatch workspace e-1"
+        "persistent-workspaces": {
+            "*": 5
+        }
     },
     "hyprland/window": {
         "format": "{}",
-        "max-length": 50,
+        "max-length": 40,
         "rewrite": {
-            "(.*) — Alacritty": "  $1",
-            "(.*) — Neovim": "  $1",
-            "(.*) — kitty": "  $1"
+            "(.*) — Alacritty": "$1",
+            "(.*) — Neovim": "$1",
+            "(.*) — kitty": "$1"
         }
     },
     "clock": {
-        "format": "  {:%H:%M}",
-        "format-alt": "  {:%A, %B %d, %Y}",
+        "format": "{:%H:%M}",
+        "format-alt": "{:%A, %B %d}",
         "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>",
         "interval": 60
     },
-    "custom/sabbath": {
-        "exec": "/usr/local/bin/holy-sabbath",
-        "exec-if": "which holy-sabbath",
-        "return-type": "json",
-        "interval": 3600,
-        "format": "{}"
-    },
-    "custom/flow": {
-        "exec": "/usr/local/bin/holy-flow waybar",
-        "exec-if": "which holy-flow",
-        "return-type": "json",
-        "interval": 5,
-        "on-click": "kitty --title 'Holy Flow' -e /usr/local/bin/holy-flow tui"
-    },
-    "custom/intent": {
-        "exec": "/usr/local/bin/holy-intent waybar",
-        "exec-if": "which holy-intent",
-        "return-type": "json",
-        "interval": 60,
-        "on-click": "kitty --title 'Holy Intent' -e /usr/local/bin/holy-intent set"
-    },
     "cpu": {
-        "format": "  {usage}%",
+        "format": "{usage}%",
         "tooltip": true,
         "interval": 2
     },
     "memory": {
-        "format": "  {percentage}%",
-        "tooltip-format": "{used:0.1f}G / {total:0.1f}G used",
+        "format": "{percentage}%",
+        "tooltip-format": "{used:0.1f}G / {total:0.1f}G",
         "interval": 2
-    },
-    "disk": {
-        "format": "󰋊 {percentage_used}%",
-        "path": "/",
-        "interval": 30
     },
     "pulseaudio": {
         "format": "{icon} {volume}%",
-        "format-muted": "󰖁 Muted",
+        "format-muted": "\u2581 muted",
         "format-icons": {
-            "default": [
-                "󰕿",
-                "󰖀",
-                "󰕾"
-            ]
+            "default": ["\u2581", "\u2582", "\u2583"]
         },
         "on-click": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
     },
     "network": {
-        "format-wifi": "󰤨 {essid}",
-        "format-ethernet": "󰈀 {ipaddr}",
-        "format-linked": "󰈀 {ifname}",
-        "format-disconnected": "󰤭 Offline",
+        "format-wifi": "  {essid}",
+        "format-ethernet": "  {ipaddr}",
+        "format-linked": "  {ifname}",
+        "format-disconnected": "offline",
         "tooltip-format": "{ifname}: {ipaddr}/{cidr}",
-        "on-click": "kitty --title 'Holy WiFi' -e /usr/local/bin/holy-wifi"
-    },
-    "bluetooth": {
-        "format": "󰂯 {status}",
-        "format-connected": "󰂱 {device_alias}",
-        "format-disabled": "󰂲",
-        "tooltip-format": "{controller_alias}\n{num_connections} connected",
-        "on-click": "kitty --title 'Holy Bluetooth' -e /usr/local/bin/holy-bluetooth"
-    },
-    "backlight": {
-        "format": "󰃟 {percent}%",
-        "on-scroll-up": "brightnessctl set +5%",
-        "on-scroll-down": "brightnessctl set 5%-"
-    },
-    "custom/recording": {
-        "exec": "if pgrep -x wf-recorder > /dev/null; then echo '{\"text\": \"REC\", \"class\": \"recording\"}'; else echo '{}'; fi",
-        "return-type": "json",
-        "interval": 2,
-        "on-click": "holy-record toggle"
+        "on-click": "kitty --title 'Network' -e /usr/local/bin/holy-wifi"
     },
     "battery": {
         "states": {
@@ -139,29 +78,25 @@
         },
         "format": "{icon} {capacity}%",
         "format-icons": [
-            "󰂎",
-            "󰁺",
-            "󰁻",
-            "󰁼",
-            "󰁽",
-            "󰁾",
-            "󰁿",
-            "󰂀",
-            "󰂁",
-            "󰂂",
-            "󰁹"
+            "\u2581",
+            "\u2582",
+            "\u2583",
+            "\u2584",
+            "\u2585",
+            "\u2586",
+            "\u2587",
+            "\u2588"
         ],
-        "format-charging": "󰂄 {capacity}%",
-        "format-warning": "󰁻 {capacity}%",
-        "format-critical": "󰂎 {capacity}%"
+        "format-charging": " {capacity}%"
     },
-    "custom/help": {
-        "format": "󰞋",
-        "tooltip": "Keyboard Shortcuts (Super+/)",
-        "on-click": "kitty --title 'Holy Keys' -e /usr/local/bin/holy-keys"
+    "custom/recording": {
+        "exec": "if pgrep -x wf-recorder > /dev/null; then echo '{\"text\": \"REC\", \"class\": \"recording\"}'; else echo '{}'; fi",
+        "return-type": "json",
+        "interval": 2,
+        "on-click": "holy-record toggle"
     },
     "tray": {
-        "icon-size": 16,
-        "spacing": 8
+        "icon-size": 14,
+        "spacing": 6
     }
 }
