@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# EIGHT.ONE OS — Premium Onboarding Wizard (7 Steps)
+# EIGHT.ONE OS — Premium Onboarding Wizard (8 Steps)
 # Requires: gum, figlet
 
 GOLD="#d4af37"
@@ -9,6 +9,8 @@ CYAN="#45b7d1"
 WHITE="#e8e6df"
 DIM="#595959"
 GREEN="#2ecc71"
+
+REGION_FILE="$HOME/.eightone_region"
 
 # ── Step 1: Animated Intro ──
 step_intro() {
@@ -53,7 +55,135 @@ step_intro() {
     gum input --prompt "  Press Enter to begin setup... " --placeholder "" > /dev/null 2>&1 || true
 }
 
-# ── Step 2: System Overview ──
+# ── Step 2: Region, Keyboard & Language ──
+step_region() {
+    clear
+    gum style \
+        --foreground "$GOLD" \
+        --border-foreground "$GOLD" \
+        --border rounded \
+        --align center \
+        --width 70 \
+        --margin "1 5" \
+        --padding "0 2" \
+        "STEP 1/7 — Region & Keyboard"
+
+    echo ""
+    gum style --foreground "$WHITE" --margin "0 7" \
+        "Configure your keyboard layout, timezone, and language." \
+        "These settings apply immediately and are saved for installation."
+
+    # ── Keyboard Layout ──
+    echo ""
+    gum style --foreground "$CYAN" --bold --margin "0 7" "Keyboard Layout:"
+    echo ""
+
+    local KB_LAYOUT
+    KB_LAYOUT=$(gum choose \
+        "de  — German" \
+        "us  — English (US)" \
+        "gb  — English (UK)" \
+        "fr  — French" \
+        "es  — Spanish" \
+        "it  — Italian" \
+        "pt  — Portuguese" \
+        "br  — Portuguese (Brazil)" \
+        "nl  — Dutch" \
+        "pl  — Polish" \
+        "ru  — Russian" \
+        "se  — Swedish" \
+        "no  — Norwegian" \
+        "dk  — Danish" \
+        "fi  — Finnish" \
+        "ch  — Swiss" \
+        "at  — Austrian" \
+        "be  — Belgian" \
+        "jp  — Japanese" \
+        "kr  — Korean" \
+        --cursor.foreground "$GOLD" \
+        --height 12 \
+        --header "  Select your keyboard layout:")
+
+    KB_LAYOUT=$(echo "$KB_LAYOUT" | awk '{print $1}')
+
+    # Apply keyboard layout immediately to Hyprland
+    hyprctl keyword input:kb_layout "$KB_LAYOUT" 2>/dev/null || true
+    # Also update console keymap
+    sudo loadkeys "$KB_LAYOUT" 2>/dev/null || true
+
+    gum style --foreground "$GREEN" --margin "0 7" "  Keyboard: $KB_LAYOUT (applied)"
+
+    # ── Timezone ──
+    echo ""
+    gum style --foreground "$CYAN" --bold --margin "0 7" "Timezone:"
+    echo ""
+
+    local TIMEZONE
+    TIMEZONE=$(find /usr/share/zoneinfo/posix -type f 2>/dev/null \
+        | sed 's|/usr/share/zoneinfo/posix/||' \
+        | sort \
+        | gum filter \
+            --height 15 \
+            --prompt "  Timezone: " \
+            --prompt.foreground "$GOLD" \
+            --indicator.foreground "$GOLD" \
+            --placeholder "Type to search (e.g. Europe/Vienna)..." \
+        || echo "UTC")
+
+    # Apply timezone immediately
+    sudo timedatectl set-timezone "$TIMEZONE" 2>/dev/null || \
+        sudo ln -sf "/usr/share/zoneinfo/$TIMEZONE" /etc/localtime 2>/dev/null || true
+
+    gum style --foreground "$GREEN" --margin "0 7" "  Timezone: $TIMEZONE (applied)"
+
+    # ── Language / Locale ──
+    echo ""
+    gum style --foreground "$CYAN" --bold --margin "0 7" "System Language:"
+    echo ""
+
+    local LOCALE
+    LOCALE=$(gum choose \
+        "de_DE  — Deutsch" \
+        "en_US  — English (US)" \
+        "en_GB  — English (UK)" \
+        "fr_FR  — Francais" \
+        "es_ES  — Espanol" \
+        "it_IT  — Italiano" \
+        "pt_BR  — Portugues (Brasil)" \
+        "pt_PT  — Portugues (Portugal)" \
+        "nl_NL  — Nederlands" \
+        "pl_PL  — Polski" \
+        "ru_RU  — Russkij" \
+        "sv_SE  — Svenska" \
+        "nb_NO  — Norsk" \
+        "da_DK  — Dansk" \
+        "fi_FI  — Suomi" \
+        "ja_JP  — Nihongo" \
+        "ko_KR  — Hangugeo" \
+        "zh_CN  — Zhongwen" \
+        --cursor.foreground "$GOLD" \
+        --height 12 \
+        --header "  Select your language:")
+
+    LOCALE=$(echo "$LOCALE" | awk '{print $1}')
+
+    gum style --foreground "$GREEN" --margin "0 7" "  Language: $LOCALE"
+
+    # ── Save preferences for holy-install ──
+    cat > "$REGION_FILE" <<EOF
+KB_LAYOUT=$KB_LAYOUT
+TIMEZONE=$TIMEZONE
+LOCALE=$LOCALE
+EOF
+
+    echo ""
+    gum style --foreground "$DIM" --margin "0 7" \
+        "  Settings saved. These will be used when installing to disk."
+
+    sleep 0.5
+}
+
+# ── Step 3: System Overview ──
 step_overview() {
     clear
     gum style \
@@ -64,7 +194,7 @@ step_overview() {
         --width 70 \
         --margin "1 5" \
         --padding "0 2" \
-        "STEP 1/6 — System Overview"
+        "STEP 2/7 — System Overview"
 
     echo ""
     gum style --foreground "$WHITE" --width 70 --margin "0 7" \
@@ -93,7 +223,7 @@ Font:  JetBrainsMono Nerd Font everywhere"
     gum input --prompt "  Press Enter to continue... " --placeholder "" > /dev/null 2>&1 || true
 }
 
-# ── Step 3: Quick Shortcut Reference ──
+# ── Step 4: Quick Shortcut Reference ──
 step_shortcuts() {
     clear
     gum style \
@@ -104,7 +234,7 @@ step_shortcuts() {
         --width 70 \
         --margin "1 5" \
         --padding "0 2" \
-        "STEP 2/6 — Essential Shortcuts"
+        "STEP 3/7 — Essential Shortcuts"
 
     echo ""
     gum style --foreground "$CYAN" --bold --margin "0 7" "Core Navigation:"
@@ -138,7 +268,7 @@ step_shortcuts() {
     gum input --prompt "  Press Enter to continue... " --placeholder "" > /dev/null 2>&1 || true
 }
 
-# ── Step 4: Password Setup ──
+# ── Step 5: Password Setup ──
 step_password() {
     clear
     gum style \
@@ -149,7 +279,7 @@ step_password() {
         --width 70 \
         --margin "1 5" \
         --padding "0 2" \
-        "STEP 3/6 — Set Your Password"
+        "STEP 4/7 — Set Your Password"
 
     echo ""
     gum style --foreground "$WHITE" --width 70 --margin "0 7" \
@@ -178,7 +308,7 @@ Set a password now to secure your session."
     sleep 1
 }
 
-# ── Step 5: Brave Browser Install ──
+# ── Step 6: Brave Browser Install ──
 step_browser() {
     clear
     gum style \
@@ -189,7 +319,7 @@ step_browser() {
         --width 70 \
         --margin "1 5" \
         --padding "0 2" \
-        "STEP 4/6 — Browser Setup"
+        "STEP 5/7 — Browser Setup"
 
     echo ""
     gum style --foreground "$WHITE" --width 70 --margin "0 7" \
@@ -215,7 +345,7 @@ This requires an internet connection and ~500MB of space."
     fi
 }
 
-# ── Step 6: AI Model Download ──
+# ── Step 7: AI Model Download ──
 step_ai() {
     clear
     gum style \
@@ -226,7 +356,7 @@ step_ai() {
         --width 70 \
         --margin "1 5" \
         --padding "0 2" \
-        "STEP 5/6 — Local AI Setup"
+        "STEP 6/7 — Local AI Setup"
 
     echo ""
     gum style --foreground "$WHITE" --width 70 --margin "0 7" \
@@ -260,7 +390,7 @@ You can download a small coding model to use offline."
     fi
 }
 
-# ── Step 7: System Ready ──
+# ── Step 8: System Ready ──
 step_ready() {
     clear
     gum style \
@@ -271,7 +401,7 @@ step_ready() {
         --width 70 \
         --margin "2 5" \
         --padding "1 4" \
-        "STEP 6/6 — System Ready"
+        "STEP 7/7 — System Ready"
 
     echo ""
     gum style \
@@ -316,6 +446,7 @@ step_ready() {
 
 # ── Main ──
 step_intro
+step_region
 step_overview
 step_shortcuts
 step_password
