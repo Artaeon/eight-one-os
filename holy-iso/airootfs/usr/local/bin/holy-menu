@@ -18,8 +18,6 @@ ACTIONS=(
 
     # ─── AI Tools ───
     "  AI Assistant|kitty --title 'Holy AI' -e holy-ai"
-    "  Claude Code|kitty --title 'Claude Code' -e claude"
-    "  Gemini CLI|kitty --title 'Gemini' -e gemini"
 
     # ─── Holy Scripts ───
     "  Settings|kitty -e holy-settings"
@@ -35,6 +33,10 @@ ACTIONS=(
     "  Focus Mode|kitty -e holy-focus builder"
     "  Vibes|kitty -e holy-vibes"
     "  Notifications|kitty -e holy-notify"
+
+    # ─── Extra Tools ───
+    "  Windows VM|kitty --title 'Holy Windows' -e holy-windows"
+    "  Voice Dictation|holy-dictate toggle"
 
     # ─── System ───
     "  System Update|kitty --hold -e eightone-update"
