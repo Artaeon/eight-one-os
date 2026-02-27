@@ -49,5 +49,6 @@ file_permissions=(
   ["/usr/local/bin/holy-notify"]="0:0:755"
   ["/usr/local/bin/holy-keys"]="0:0:755"
   ["/usr/local/bin/holy-power"]="0:0:755"
+  ["/usr/local/bin/holy-windows"]="0:0:755"
   ["/usr/local/bin/start-hyprland"]="0:0:755"
 )

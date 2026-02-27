@@ -1,0 +1,133 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# EIGHT.ONE OS — Holy Windows VM (Docker-based)
+# Spins up a Windows VM using dockur/windows via Docker
+
+GOLD="#d4af37"
+WHITE="#e8e6df"
+DIM="#595959"
+RED="#e74c3c"
+GREEN="#2ecc71"
+
+# ── Preflight Checks ──
+if ! command -v docker &>/dev/null; then
+    gum style --foreground "$RED" --bold --margin "1 2" \
+        "Docker is not installed. Install it with: sudo pacman -S docker"
+    exit 1
+fi
+
+if ! docker info &>/dev/null 2>&1; then
+    gum style --foreground "$DIM" --margin "1 2" \
+        "Docker daemon is not running. Starting it..."
+    sudo systemctl start docker
+    sleep 2
+    if ! docker info &>/dev/null 2>&1; then
+        gum style --foreground "$RED" --bold --margin "1 2" \
+            "Failed to start Docker. Try: sudo systemctl start docker"
+        exit 1
+    fi
+fi
+
+# ── Welcome ──
+clear
+gum style \
+    --foreground "$GOLD" \
+    --border-foreground "$GOLD" \
+    --border double \
+    --align center \
+    --width 60 \
+    --margin "1 5" \
+    --padding "1 2" \
+    "HOLY WINDOWS" \
+    "" \
+    "Run Windows in a Docker container" \
+    "Powered by dockur/windows"
+
+echo ""
+
+# ── Version Selection ──
+gum style --foreground "$WHITE" --bold --margin "0 5" "Select Windows version:"
+echo ""
+
+VERSION=$(gum choose \
+    "win11  — Windows 11" \
+    "win10  — Windows 10" \
+    "win8   — Windows 8.1" \
+    "win7   — Windows 7" \
+    "winxp  — Windows XP" \
+    "win2022 — Windows Server 2022" \
+    "win2019 — Windows Server 2019" \
+    --header "" \
+    --cursor.foreground "$GOLD" \
+    --selected.foreground "$GOLD")
+
+# Extract version key
+VERSION_KEY=$(echo "$VERSION" | awk '{print $1}')
+
+echo ""
+
+# ── RAM Allocation ──
+gum style --foreground "$WHITE" --bold --margin "0 5" "Allocate RAM:"
+echo ""
+
+RAM=$(gum choose \
+    "2G" \
+    "4G" \
+    "8G" \
+    --cursor.foreground "$GOLD" \
+    --selected.foreground "$GOLD")
+
+echo ""
+
+# ── Disk Size ──
+gum style --foreground "$WHITE" --bold --margin "0 5" "Virtual disk size:"
+echo ""
+
+DISK=$(gum choose \
+    "32G" \
+    "64G" \
+    "128G" \
+    "256G" \
+    --cursor.foreground "$GOLD" \
+    --selected.foreground "$GOLD")
+
+echo ""
+
+# ── Storage Directory ──
+WIN_DIR="$HOME/.local/share/holy-windows"
+mkdir -p "$WIN_DIR/storage"
+
+# ── Confirmation ──
+gum style --foreground "$DIM" --margin "0 5" \
+    "Version:  $VERSION_KEY" \
+    "RAM:      $RAM" \
+    "Disk:     $DISK" \
+    "Storage:  $WIN_DIR/storage"
+
+echo ""
+if ! gum confirm --prompt.foreground "$GOLD" "  Launch Windows VM?"; then
+    gum style --foreground "$DIM" --margin "1 5" "Cancelled."
+    exit 0
+fi
+
+echo ""
+gum style --foreground "$GOLD" --bold --margin "0 5" \
+    "Starting Windows VM..."
+gum style --foreground "$DIM" --margin "0 5" \
+    "Access via browser: http://localhost:8006" \
+    "VNC port: 5900"
+echo ""
+
+# ── Launch Container ──
+docker run -it --rm \
+    --name holy-windows \
+    -p 8006:8006 \
+    -p 5900:5900 \
+    -e VERSION="$VERSION_KEY" \
+    -e RAM_SIZE="$RAM" \
+    -e DISK_SIZE="$DISK" \
+    -v "$WIN_DIR/storage:/storage" \
+    --device=/dev/kvm \
+    --cap-add NET_ADMIN \
+    dockur/windows
