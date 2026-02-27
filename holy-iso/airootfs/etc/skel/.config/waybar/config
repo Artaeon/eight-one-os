@@ -22,9 +22,17 @@
     "hyprland/workspaces": {
         "format": "{icon}",
         "format-icons": {
-            "active": "\u25cf",
-            "default": "\u25cb",
-            "occupied": "\u25c9"
+            "1": "",
+            "2": "",
+            "3": "",
+            "4": "",
+            "5": "",
+            "6": "",
+            "7": "",
+            "8": "",
+            "9": "",
+            "active": "",
+            "default": ""
         },
         "persistent-workspaces": {
             "*": 5
