@@ -172,6 +172,7 @@ mpv
 yt-dlp
 obs-studio
 kdenlive
+imagemagick
 
 # ── Office ──
 libreoffice-fresh
