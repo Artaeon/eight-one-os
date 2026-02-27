@@ -1,35 +1,670 @@
 #!/usr/bin/env bash
-# EIGHT.ONE OS — Holy Installer Wrapper
-# Launches archinstall with specific instructions to ensure BTRFS and GRUB are chosen.
+set -euo pipefail
 
-CYAN="\e[36m"
-GOLD="\e[33m"
-BOLD="\e[1m"
-DIM="\e[2m"
-RESET="\e[0m"
+# EIGHT.ONE OS — Holy Install Wizard
+# A premium, gum-driven TUI installer that generates an archinstall config
+# and runs a fully automated installation to disk.
 
-clear
-echo -e "${GOLD}${BOLD}"
-figlet -f small "Holy Install" 2>/dev/null || echo "═══ HOLY INSTALLER ═══"
-echo -e "${RESET}${DIM}EIGHT.ONE OS System Installer${RESET}\n"
+# ── Matrix Palette ──
+GOLD="#d4af37"
+WHITE="#e8e6df"
+DIM="#595959"
+DARK="#0a0a0f"
+RED="#e74c3c"
+GREEN="#2ecc71"
 
-echo -e "This wizard will launch the official Arch Linux installer (\`archinstall\`)."
-echo -e "To ensure EIGHT.ONE OS installs correctly with ${GOLD}system snapshots${RESET} and the ${GOLD}animated bootloader${RESET},"
-echo -e "please make sure you select the following options during the setup:\n"
+# ── Install State ──
+INSTALL_TIMEZONE=""
+INSTALL_USERNAME=""
+INSTALL_REALNAME=""
+INSTALL_PASSWORD=""
+INSTALL_LUKS="false"
+INSTALL_LUKS_PASS=""
+INSTALL_DRIVE=""
+INSTALL_DRIVE_PATH=""
+CONFIG_FILE="/tmp/eightone_install.json"
+CREDS_FILE="/tmp/eightone_creds.json"
+DISK_LAYOUT_FILE="/tmp/eightone_disk.json"
 
-echo -e "  ${CYAN}1. Bootloader:${RESET} grub-install"
-echo -e "  ${CYAN}2. File System:${RESET} btrfs (and choose 'yes' for default subvolumes)"
-echo -e "  ${CYAN}3. Profile:${RESET} Leave blank (do not select a desktop environment, everything is pre-configured)"
-echo -e "  ${CYAN}4. Network:${RESET} NetworkManager\n"
+# ── Helpers ──
+header() {
+    local step="$1" title="$2"
+    clear
+    gum style \
+        --foreground "$GOLD" \
+        --border-foreground "$GOLD" \
+        --border rounded \
+        --align center \
+        --width 70 \
+        --margin "1 5" \
+        --padding "0 2" \
+        "$step — $title"
+    echo ""
+}
 
-if gum confirm "Ready to start the installation?"; then
-    # Launch the official archinstall
-    archinstall
-    
-    echo -e "\n${GOLD}✓ Installation process finished.${RESET}"
-    echo -e "If the installation was successful, you can now reboot your machine."
-    echo -e "Your GRUB menu and Snapshots will be automatically configured."
-else
-    echo "Installation cancelled."
+abort() {
+    echo ""
+    gum style --foreground "$DIM" --margin "1 5" "Installation cancelled."
     exit 0
+}
+
+# ═══════════════════════════════════════════════════════════════════
+# STEP 1: WELCOME
+# ═══════════════════════════════════════════════════════════════════
+step_welcome() {
+    clear
+    gum style \
+        --foreground "$GOLD" \
+        --border-foreground "$GOLD" \
+        --border double \
+        --align center \
+        --width 70 \
+        --margin "2 5" \
+        --padding "1 4" \
+        "$(figlet -f small '8.1' 2>/dev/null || echo '  8.1')" \
+        "" \
+        "E I G H T . O N E   O S" \
+        "System Installer"
+
+    echo ""
+    gum style \
+        --foreground "$RED" \
+        --bold \
+        --align center \
+        --width 70 \
+        --margin "1 5" \
+        "WARNING: This will ERASE the selected drive."
+
+    echo ""
+    gum style \
+        --foreground "$WHITE" \
+        --align center \
+        --width 70 \
+        --margin "0 5" \
+        "This wizard will install EIGHT.ONE OS to your disk with:" \
+        "" \
+        "  GRUB bootloader with Matrix theme" \
+        "  BTRFS filesystem with snapshot support" \
+        "  Full EIGHT.ONE OS desktop environment" \
+        "  All holy-* tools and configurations"
+
+    echo ""
+    gum style \
+        --foreground "$DIM" \
+        --align center \
+        --width 70 \
+        --margin "0 5" \
+        "Ensure you have a stable internet connection."
+
+    echo ""
+    if ! gum confirm --prompt.foreground "$GOLD" "  Begin installation?"; then
+        abort
+    fi
+}
+
+# ═══════════════════════════════════════════════════════════════════
+# STEP 2: TIMEZONE / LOCATION
+# ═══════════════════════════════════════════════════════════════════
+step_timezone() {
+    header "STEP 1/5" "Location & Timezone"
+
+    gum style --foreground "$WHITE" --margin "0 7" \
+        "Select your timezone. Start typing to filter."
+    echo ""
+
+    # Build timezone list from system zoneinfo
+    INSTALL_TIMEZONE=$(find /usr/share/zoneinfo/posix -type f 2>/dev/null \
+        | sed 's|/usr/share/zoneinfo/posix/||' \
+        | sort \
+        | gum filter \
+            --height 20 \
+            --prompt "  Timezone: " \
+            --prompt.foreground "$GOLD" \
+            --indicator.foreground "$GOLD" \
+            --placeholder "Type to search (e.g. Europe/Vienna)..." \
+        || echo "UTC")
+
+    echo ""
+    gum style --foreground "$GREEN" --margin "0 7" "  Timezone: $INSTALL_TIMEZONE"
+    sleep 0.5
+}
+
+# ═══════════════════════════════════════════════════════════════════
+# STEP 3: USER CREATION
+# ═══════════════════════════════════════════════════════════════════
+step_user() {
+    header "STEP 2/5" "User Account"
+
+    gum style --foreground "$WHITE" --margin "0 7" \
+        "Create your user account for the installed system."
+    echo ""
+
+    # Username
+    INSTALL_USERNAME=$(gum input \
+        --prompt "  Username: " \
+        --prompt.foreground "$GOLD" \
+        --placeholder "lowercase, no spaces" \
+        --char-limit 32 \
+        --width 40)
+
+    if [[ -z "$INSTALL_USERNAME" ]]; then
+        gum style --foreground "$RED" --margin "0 7" "Username cannot be empty."
+        sleep 1
+        step_user
+        return
+    fi
+
+    # Sanitize username (lowercase, alphanumeric + dash/underscore only)
+    INSTALL_USERNAME=$(echo "$INSTALL_USERNAME" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9_-]//g')
+
+    # Real name
+    INSTALL_REALNAME=$(gum input \
+        --prompt "  Full Name: " \
+        --prompt.foreground "$GOLD" \
+        --placeholder "Your display name" \
+        --width 40)
+
+    echo ""
+
+    # Password
+    local password_set=false
+    while [[ "$password_set" == "false" ]]; do
+        INSTALL_PASSWORD=$(gum input \
+            --password \
+            --prompt "  Password: " \
+            --prompt.foreground "$GOLD" \
+            --placeholder "Enter password")
+
+        local pass_confirm
+        pass_confirm=$(gum input \
+            --password \
+            --prompt "  Confirm:  " \
+            --prompt.foreground "$GOLD" \
+            --placeholder "Confirm password")
+
+        if [[ -z "$INSTALL_PASSWORD" ]]; then
+            gum style --foreground "$RED" --margin "0 7" "  Password cannot be empty."
+        elif [[ "$INSTALL_PASSWORD" != "$pass_confirm" ]]; then
+            gum style --foreground "$RED" --margin "0 7" "  Passwords do not match. Try again."
+        else
+            password_set=true
+        fi
+    done
+
+    echo ""
+    gum style --foreground "$GREEN" --margin "0 7" \
+        "  User: $INSTALL_USERNAME ($INSTALL_REALNAME)"
+    sleep 0.5
+}
+
+# ═══════════════════════════════════════════════════════════════════
+# STEP 4: DISK ENCRYPTION
+# ═══════════════════════════════════════════════════════════════════
+step_encryption() {
+    header "STEP 3/5" "Security — Disk Encryption"
+
+    gum style --foreground "$WHITE" --margin "0 7" \
+        "Full disk encryption (LUKS) protects your data if the" \
+        "device is lost or stolen. You will need to enter a" \
+        "passphrase every time you boot."
+
+    echo ""
+    if gum confirm --prompt.foreground "$GOLD" "  Enable Full Disk Encryption (LUKS)?"; then
+        INSTALL_LUKS="true"
+        echo ""
+
+        local luks_set=false
+        while [[ "$luks_set" == "false" ]]; do
+            INSTALL_LUKS_PASS=$(gum input \
+                --password \
+                --prompt "  Encryption passphrase: " \
+                --prompt.foreground "$GOLD" \
+                --placeholder "Enter LUKS passphrase")
+
+            local luks_confirm
+            luks_confirm=$(gum input \
+                --password \
+                --prompt "  Confirm passphrase:    " \
+                --prompt.foreground "$GOLD" \
+                --placeholder "Confirm passphrase")
+
+            if [[ -z "$INSTALL_LUKS_PASS" ]]; then
+                gum style --foreground "$RED" --margin "0 7" "  Passphrase cannot be empty."
+            elif [[ "$INSTALL_LUKS_PASS" != "$luks_confirm" ]]; then
+                gum style --foreground "$RED" --margin "0 7" "  Passphrases do not match. Try again."
+            else
+                luks_set=true
+            fi
+        done
+
+        gum style --foreground "$GREEN" --margin "1 7" "  LUKS encryption: ENABLED"
+    else
+        INSTALL_LUKS="false"
+        gum style --foreground "$DIM" --margin "1 7" "  LUKS encryption: disabled"
+    fi
+    sleep 0.5
+}
+
+# ═══════════════════════════════════════════════════════════════════
+# STEP 5: DRIVE SELECTION
+# ═══════════════════════════════════════════════════════════════════
+step_drive() {
+    header "STEP 4/5" "Target Drive"
+
+    gum style --foreground "$WHITE" --margin "0 7" \
+        "Select the drive to install EIGHT.ONE OS onto." \
+        "ALL DATA on the selected drive will be erased."
+    echo ""
+
+    gum style --foreground "$RED" --bold --margin "0 7" \
+        "Double-check you are selecting the correct drive!"
+    echo ""
+
+    # List drives
+    local drive_list
+    drive_list=$(lsblk -d -n -o NAME,SIZE,MODEL 2>/dev/null | grep -v "loop\|sr\|rom" | sed 's/^/  /')
+
+    if [[ -z "$drive_list" ]]; then
+        gum style --foreground "$RED" --margin "0 7" "No drives detected!"
+        exit 1
+    fi
+
+    INSTALL_DRIVE=$(echo "$drive_list" | gum choose \
+        --cursor.foreground "$GOLD" \
+        --header "Available drives:")
+
+    # Extract just the device name
+    INSTALL_DRIVE=$(echo "$INSTALL_DRIVE" | awk '{print $1}')
+    INSTALL_DRIVE_PATH="/dev/$INSTALL_DRIVE"
+
+    echo ""
+    gum style --foreground "$GOLD" --bold --margin "0 7" \
+        "  Target: $INSTALL_DRIVE_PATH"
+
+    # Show drive details
+    echo ""
+    lsblk "$INSTALL_DRIVE_PATH" 2>/dev/null | head -5 | while IFS= read -r line; do
+        gum style --foreground "$DIM" --margin "0 9" "$line"
+    done
+
+    echo ""
+    gum style --foreground "$RED" --bold --margin "0 7" \
+        "ALL DATA on $INSTALL_DRIVE_PATH will be PERMANENTLY ERASED."
+
+    echo ""
+    if ! gum confirm --prompt.foreground "$RED" "  Are you absolutely sure?"; then
+        abort
+    fi
+}
+
+# ═══════════════════════════════════════════════════════════════════
+# STEP 6: CONFIRMATION & INSTALL
+# ═══════════════════════════════════════════════════════════════════
+step_confirm_and_install() {
+    header "STEP 5/5" "Confirm & Install"
+
+    gum style --foreground "$WHITE" --bold --margin "0 7" "Installation Summary:"
+    echo ""
+    gum style --foreground "$WHITE" --margin "0 9" \
+        "  Timezone:    $INSTALL_TIMEZONE" \
+        "  Username:    $INSTALL_USERNAME" \
+        "  Full Name:   $INSTALL_REALNAME" \
+        "  Encryption:  $([ "$INSTALL_LUKS" = "true" ] && echo "LUKS Enabled" || echo "None")" \
+        "  Target:      $INSTALL_DRIVE_PATH" \
+        "  Filesystem:  BTRFS with subvolumes" \
+        "  Bootloader:  GRUB" \
+        "  Network:     NetworkManager"
+
+    echo ""
+    gum style --foreground "$GOLD" --margin "0 7" \
+        "  Post-install: EIGHT.ONE OS theme, holy-* tools, BTRFS snapshots"
+
+    echo ""
+    if ! gum confirm --prompt.foreground "$GOLD" "  Start installation? (This is your last chance to cancel)"; then
+        abort
+    fi
+
+    # ── Generate archinstall config ──
+    generate_config
+    run_install
+}
+
+# ═══════════════════════════════════════════════════════════════════
+# CONFIG GENERATION
+# ═══════════════════════════════════════════════════════════════════
+generate_config() {
+    gum style --foreground "$GOLD" --bold --margin "1 7" "Generating configuration..."
+
+    # ── Disk layout JSON ──
+    local encryption_block=""
+    if [[ "$INSTALL_LUKS" == "true" ]]; then
+        encryption_block=$(cat <<ENCEOF
+    "encryption": {
+        "encryption_type": "luks",
+        "encryption_password": "$INSTALL_LUKS_PASS"
+    },
+ENCEOF
+)
+    fi
+
+    cat > "$DISK_LAYOUT_FILE" <<DISKEOF
+{
+    "$INSTALL_DRIVE_PATH": {
+        "partitions": [
+            {
+                "boot": true,
+                "encrypted": false,
+                "filesystem": {
+                    "format": "fat32",
+                    "mount_options": []
+                },
+                "mountpoint": "/boot",
+                "size": {
+                    "sector_size": null,
+                    "unit": "MiB",
+                    "value": 512
+                },
+                "type": "primary",
+                "flags": ["Boot"],
+                "wipe": true
+            },
+            {
+    $encryption_block
+                "encrypted": $([ "$INSTALL_LUKS" = "true" ] && echo "true" || echo "false"),
+                "filesystem": {
+                    "format": "btrfs",
+                    "mount_options": ["compress=zstd", "noatime"]
+                },
+                "btrfs": [
+                    {"mountpoint": "/", "name": "@"},
+                    {"mountpoint": "/home", "name": "@home"},
+                    {"mountpoint": "/var/log", "name": "@log"},
+                    {"mountpoint": "/var/cache/pacman/pkg", "name": "@pkg"},
+                    {"mountpoint": "/.snapshots", "name": "@snapshots"}
+                ],
+                "mountpoint": null,
+                "size": {
+                    "sector_size": null,
+                    "unit": "Remainder",
+                    "value": 0
+                },
+                "type": "primary",
+                "wipe": true
+            }
+        ],
+        "wipe": true
+    }
+}
+DISKEOF
+
+    # ── Credentials JSON ──
+    cat > "$CREDS_FILE" <<CREDEOF
+{
+    "!users": [
+        {
+            "username": "$INSTALL_USERNAME",
+            "!password": "$INSTALL_PASSWORD",
+            "sudo": true
+        }
+    ]
+}
+CREDEOF
+
+    # ── Main config JSON ──
+    cat > "$CONFIG_FILE" <<CONFEOF
+{
+    "additional-repositories": [],
+    "audio_config": {
+        "audio": "pipewire"
+    },
+    "bootloader": "Grub",
+    "config_version": "2.6.4",
+    "debug": false,
+    "disk_config": {
+        "config_type": "default_layout",
+        "device_modifications": []
+    },
+    "hostname": "eightone",
+    "kernels": ["linux"],
+    "locale_config": {
+        "kb_layout": "us",
+        "sys_enc": "UTF-8",
+        "sys_lang": "en_US"
+    },
+    "mirror_config": {
+        "custom_mirrors": [],
+        "mirror_regions": {}
+    },
+    "network_config": {
+        "type": "nm"
+    },
+    "no_pkg_lookups": false,
+    "ntp": true,
+    "packages": [],
+    "parallel downloads": 5,
+    "profile_config": null,
+    "swap": true,
+    "timezone": "$INSTALL_TIMEZONE",
+    "version": "2.6.4"
+}
+CONFEOF
+
+    gum style --foreground "$GREEN" --margin "0 7" "  Configuration generated."
+}
+
+# ═══════════════════════════════════════════════════════════════════
+# RUN INSTALLATION
+# ═══════════════════════════════════════════════════════════════════
+run_install() {
+    echo ""
+    gum style \
+        --foreground "$GOLD" \
+        --border-foreground "$GOLD" \
+        --border double \
+        --align center \
+        --width 70 \
+        --margin "1 5" \
+        --padding "1 2" \
+        "Installing EIGHT.ONE OS..." \
+        "" \
+        "This may take 5-15 minutes depending on your hardware."
+
+    echo ""
+
+    # Run archinstall with generated config
+    if archinstall \
+        --config "$CONFIG_FILE" \
+        --creds "$CREDS_FILE" \
+        --disk_layouts "$DISK_LAYOUT_FILE" \
+        --silent 2>&1 | tee /tmp/eightone_install.log; then
+
+        # ── Post-install: Copy skel, enable services, configure GRUB ──
+        post_install
+        step_complete
+    else
+        echo ""
+        gum style --foreground "$RED" --bold --margin "1 5" \
+            "Installation failed. Check /tmp/eightone_install.log for details."
+        echo ""
+        gum style --foreground "$DIM" --margin "0 5" \
+            "Common fixes:" \
+            "  - Ensure internet connectivity" \
+            "  - Try a different mirror: choose-mirror" \
+            "  - Check drive health: smartctl -a $INSTALL_DRIVE_PATH"
+        exit 1
+    fi
+}
+
+# ═══════════════════════════════════════════════════════════════════
+# POST-INSTALL CUSTOMIZATION
+# ═══════════════════════════════════════════════════════════════════
+post_install() {
+    local mount_root="/mnt/archinstall"
+
+    # Detect mount point (archinstall may use /mnt or /mnt/archinstall)
+    if mountpoint -q /mnt/archinstall 2>/dev/null; then
+        mount_root="/mnt/archinstall"
+    elif mountpoint -q /mnt 2>/dev/null; then
+        mount_root="/mnt"
+    else
+        gum style --foreground "$DIM" --margin "0 7" \
+            "  Could not detect mount point, skipping post-install customization."
+        return 0
+    fi
+
+    gum style --foreground "$GOLD" --margin "1 7" "  Applying EIGHT.ONE OS customizations..."
+
+    # Copy skel configs to the new user's home
+    local user_home="$mount_root/home/$INSTALL_USERNAME"
+    if [[ -d /etc/skel/.config && -d "$user_home" ]]; then
+        cp -rT /etc/skel/ "$user_home/" 2>/dev/null || true
+        # Fix ownership inside chroot
+        arch-chroot "$mount_root" chown -R "$INSTALL_USERNAME:$INSTALL_USERNAME" "/home/$INSTALL_USERNAME" 2>/dev/null || true
+        gum style --foreground "$DIM" --margin "0 9" "  Copied desktop configuration"
+    fi
+
+    # Copy GRUB theme
+    if [[ -d /usr/share/grub/themes/eightone ]]; then
+        mkdir -p "$mount_root/usr/share/grub/themes/eightone"
+        cp -r /usr/share/grub/themes/eightone/* "$mount_root/usr/share/grub/themes/eightone/" 2>/dev/null || true
+        gum style --foreground "$DIM" --margin "0 9" "  Installed GRUB theme"
+    fi
+
+    # Copy GRUB config
+    if [[ -f /etc/default/grub ]]; then
+        cp /etc/default/grub "$mount_root/etc/default/grub" 2>/dev/null || true
+    fi
+
+    # Copy Plymouth theme
+    if [[ -d /usr/share/plymouth/themes/eightone ]]; then
+        mkdir -p "$mount_root/usr/share/plymouth/themes/"
+        cp -r /usr/share/plymouth/themes/eightone "$mount_root/usr/share/plymouth/themes/" 2>/dev/null || true
+        gum style --foreground "$DIM" --margin "0 9" "  Installed Plymouth boot animation"
+    fi
+
+    # Copy holy-* scripts
+    for script in /usr/local/bin/holy-*; do
+        [[ -f "$script" ]] && cp "$script" "$mount_root/usr/local/bin/" 2>/dev/null || true
+    done
+    # Copy other custom scripts
+    for script in eightone-update start-hyprland choose-mirror; do
+        [[ -f "/usr/local/bin/$script" ]] && cp "/usr/local/bin/$script" "$mount_root/usr/local/bin/" 2>/dev/null || true
+    done
+    chmod 755 "$mount_root"/usr/local/bin/holy-* 2>/dev/null || true
+    chmod 755 "$mount_root"/usr/local/bin/eightone-update 2>/dev/null || true
+    chmod 755 "$mount_root"/usr/local/bin/start-hyprland 2>/dev/null || true
+    gum style --foreground "$DIM" --margin "0 9" "  Installed holy-* tools"
+
+    # Enable services in the installed system
+    arch-chroot "$mount_root" bash -c '
+        systemctl enable NetworkManager 2>/dev/null || true
+        systemctl enable docker 2>/dev/null || true
+        systemctl enable bluetooth 2>/dev/null || true
+        systemctl enable greetd 2>/dev/null || true
+        systemctl enable grub-btrfsd 2>/dev/null || true
+        systemctl enable tlp 2>/dev/null || true
+        systemctl enable earlyoom 2>/dev/null || true
+        systemctl enable cups 2>/dev/null || true
+        systemctl enable ufw 2>/dev/null || true
+    ' 2>/dev/null || true
+    gum style --foreground "$DIM" --margin "0 9" "  Enabled system services"
+
+    # Set default shell to zsh
+    arch-chroot "$mount_root" chsh -s /usr/bin/zsh "$INSTALL_USERNAME" 2>/dev/null || true
+
+    # Copy greetd config
+    if [[ -f /etc/greetd/config.toml ]]; then
+        mkdir -p "$mount_root/etc/greetd"
+        cp /etc/greetd/config.toml "$mount_root/etc/greetd/config.toml" 2>/dev/null || true
+    fi
+
+    # Regenerate GRUB config so theme and snapshots submenu appear
+    arch-chroot "$mount_root" grub-mkconfig -o /boot/grub/grub.cfg 2>/dev/null || true
+    gum style --foreground "$DIM" --margin "0 9" "  Regenerated GRUB configuration"
+
+    # Configure snapper for BTRFS snapshots
+    arch-chroot "$mount_root" bash -c '
+        if command -v snapper &>/dev/null; then
+            snapper -c root create-config / 2>/dev/null || true
+            systemctl enable snapper-timeline.timer 2>/dev/null || true
+            systemctl enable snapper-cleanup.timer 2>/dev/null || true
+        fi
+    ' 2>/dev/null || true
+    gum style --foreground "$DIM" --margin "0 9" "  Configured BTRFS snapshots"
+
+    # Set real name in passwd via chfn
+    if [[ -n "$INSTALL_REALNAME" ]]; then
+        arch-chroot "$mount_root" chfn -f "$INSTALL_REALNAME" "$INSTALL_USERNAME" 2>/dev/null || true
+    fi
+
+    gum style --foreground "$GREEN" --bold --margin "1 7" "  Post-install customization complete."
+}
+
+# ═══════════════════════════════════════════════════════════════════
+# COMPLETION SCREEN
+# ═══════════════════════════════════════════════════════════════════
+step_complete() {
+    clear
+    gum style \
+        --foreground "$GOLD" \
+        --border-foreground "$GOLD" \
+        --border double \
+        --align center \
+        --width 70 \
+        --margin "2 5" \
+        --padding "1 4" \
+        "$(figlet -f small 'DONE' 2>/dev/null || echo 'INSTALLATION COMPLETE')"
+
+    echo ""
+    gum style \
+        --foreground "$GREEN" \
+        --bold \
+        --align center \
+        --width 70 \
+        --margin "1 5" \
+        "EIGHT.ONE OS has been installed successfully."
+
+    echo ""
+    gum style --foreground "$WHITE" --align center --width 70 --margin "0 5" \
+        "What was installed:"
+    echo ""
+    gum style --foreground "$DIM" --margin "0 9" \
+        "  GRUB bootloader with Matrix gold theme" \
+        "  BTRFS with snapshots (accessible from GRUB)" \
+        "  Hyprland desktop with full config" \
+        "  All holy-* developer tools" \
+        "  NetworkManager, Docker, Bluetooth" \
+        "  Zsh with Starship + mise dev environments"
+
+    echo ""
+    gum style --foreground "$GOLD" --bold --align center --width 70 --margin "1 5" \
+        "Remove the USB drive and reboot to enter EIGHT.ONE OS."
+
+    echo ""
+    if gum confirm --prompt.foreground "$GOLD" "  Reboot now?"; then
+        # Clean up sensitive files
+        rm -f "$CONFIG_FILE" "$CREDS_FILE" "$DISK_LAYOUT_FILE"
+        systemctl reboot
+    else
+        rm -f "$CONFIG_FILE" "$CREDS_FILE" "$DISK_LAYOUT_FILE"
+        echo ""
+        gum style --foreground "$DIM" --margin "1 5" \
+            "Reboot when ready with: systemctl reboot"
+    fi
+}
+
+# ═══════════════════════════════════════════════════════════════════
+# MAIN
+# ═══════════════════════════════════════════════════════════════════
+# Must run as root
+if [[ $EUID -ne 0 ]]; then
+    echo "holy-install must be run as root. Try: sudo holy-install"
+    exit 1
 fi
+
+step_welcome
+step_timezone
+step_user
+step_encryption
+step_drive
+step_confirm_and_install
