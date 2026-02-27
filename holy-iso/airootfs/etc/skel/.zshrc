@@ -22,25 +22,30 @@ RESET="\e[0m"
 BOLD="\e[1m"
 CYAN="\e[36m"
 
-# Welcome message (only in top-level interactive shell, not nested/subshells)
+# Matrix-style welcome (only in top-level interactive shell, not nested/subshells)
 if [[ -z "$EIGHTONE_BANNER_SHOWN" && -o interactive ]]; then
     export EIGHTONE_BANNER_SHOWN=1
-    echo -e "${YELLOW}${BOLD}"
-    echo "       _   _"
-    echo "     ( _ ) / |"
-    echo "     / _ \ | |"
-    echo "    | (_) || |"
-    echo "     \___/ |_|"
-    echo -e "      EIGHT.ONE OS (INFINITY ONE)${RESET}"
-    echo -e "\n${CYAN}✝ Welcome to the Holy Developer Environment ✝${RESET}\n"
-    echo "  [Super + Enter]   Terminal          [Super + D]     Dashboard"
-    echo "  [Super + Space]   App Launcher      [Super + Shift+D] New Project"
-    echo "  [Super + A]       Holy AI           [Super + W]     Flow Timer"
-    echo "  [Super + B]       Browser           [Super + T]     Zellij"
-    echo "  [Super + E]       File Manager      [Super + V]     Clipboard"
-    echo "  [Super + S]       Screenshot        [Super + Shift+R] Record"
-    echo "  [Super + Escape]  Lock Screen       [Super + /]     All Shortcuts"
-    echo ""
+    local DIM="\e[2m" GOLD="\e[33m" DGOLD="\e[2;33m"
+
+    # Digital rain header
+    local -a rain_chars=("01101" "10010" "{init}" "01001" "<8.1>" "11010" "[sys]" "00110")
+    local rain_line=""
+    for c in "${rain_chars[@]}"; do
+        rain_line+="${DGOLD}${c} "
+    done
+    echo -e "${rain_line}${RESET}"
+
+    echo -e "${GOLD}${BOLD}"
+    echo "  ╔══════════════════════════════════════════════╗"
+    echo "  ║   8.1  ·  EIGHT.ONE OS  ·  INFINITY ONE    ║"
+    echo "  ╚══════════════════════════════════════════════╝${RESET}"
+
+    echo -e "${DIM}"
+    echo "    Super+Enter  terminal    Super+D      dash"
+    echo "    Super+Space  launcher    Super+\`      dropdown"
+    echo "    Super+A      ai          Super+Tab    cycle ws"
+    echo "    Super+C      ide         Super+/      all keys"
+    echo -e "${RESET}"
 fi
 
 # Aliases for modern CLI tools
