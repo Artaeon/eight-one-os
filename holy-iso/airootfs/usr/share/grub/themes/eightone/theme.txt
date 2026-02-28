@@ -39,7 +39,7 @@ message-bg-color: "#0a0a0f"
     item_font = "JetBrainsMono Nerd Font Regular 16"
     item_color = "#e8e6df"
     selected_item_font = "JetBrainsMono Nerd Font Regular 16"
-    selected_item_color = "#0a0a0f"
+    selected_item_color = "#000000"
     item_height = 40
     item_spacing = 8
     item_padding = 16

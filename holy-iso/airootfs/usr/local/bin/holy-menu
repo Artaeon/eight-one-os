@@ -9,20 +9,20 @@ set -euo pipefail
 FUZZEL_OPTS=(
     --dmenu
     --prompt="  "
-    --width=45
-    --lines=20
-    --horizontal-pad=20
-    --vertical-pad=12
-    --inner-pad=8
+    --width=70
+    --lines=25
+    --horizontal-pad=40
+    --vertical-pad=20
+    --inner-pad=12
     --border-width=2
-    --border-radius=12
-    --border-color=d4af37ff
+    --border-radius=16
+    --border-color=00ff41ff
     --background=0a0a0fee
     --text-color=e8e6dfff
-    --match-color=d4af37ff
-    --selection-color=d4af3733
-    --selection-text-color=d4af37ff
-    --font="JetBrainsMono Nerd Font:size=12"
+    --match-color=00ff41ff
+    --selection-color=00ff4133
+    --selection-text-color=00ff41ff
+    --font="JetBrainsMono Nerd Font:size=14"
 )
 
 # ── Categories ──
@@ -80,6 +80,7 @@ case "$SELECTED_CATEGORY" in
             ["WiFi"]="kitty -e holy-wifi"
             ["Bluetooth"]="kitty -e holy-bluetooth"
             ["Display"]="kitty -e holy-display"
+            ["Wallpaper"]="kitty --title 'Holy Wall' -e holy-wall"
             ["SSH Keys"]="kitty -e holy-ssh"
             ["Dev Tools"]="kitty --title 'Holy Dev' -e holy-dev"
         )

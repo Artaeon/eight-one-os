@@ -20,7 +20,7 @@
         "tray"
     ],
     "hyprland/workspaces": {
-        "format": "{icon}",
+        "format": "{name}",
         "format-icons": {
             "1": "",
             "2": "",
@@ -50,17 +50,39 @@
     "clock": {
         "format": "{:%H:%M}",
         "format-alt": "{:%A, %B %d}",
-        "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>",
+        "tooltip-format": "<tt><small>{calendar}</small></tt>",
+        "calendar": {
+            "mode"          : "month",
+            "mode-mon-col"  : 3,
+            "weeks-pos"     : "right",
+            "on-scroll"     : 1,
+            "format": {
+                "months":     "<span color='#00ff41'><b>{}</b></span>",
+                "days":       "<span color='#e8e6df'><b>{}</b></span>",
+                "weeks":      "<span color='#595959'><b>W{}</b></span>",
+                "weekdays":   "<span color='#d4af37'><b>{}</b></span>",
+                "today":      "<span color='#ff6b6b'><b><u>{}</u></b></span>"
+            }
+        },
+        "actions": {
+            "on-click-right": "mode",
+            "on-click-forward": "tz_up",
+            "on-click-backward": "tz_down",
+            "on-scroll-up": "shift_up",
+            "on-scroll-down": "shift_down"
+        },
         "interval": 60
     },
     "cpu": {
-        "format": "{usage}%",
+        "format": "{usage}% CPU",
         "tooltip": true,
+        "on-click": "kitty -e btop",
         "interval": 2
     },
     "memory": {
-        "format": "{percentage}%",
+        "format": "{percentage}% RAM",
         "tooltip-format": "{used:0.1f}G / {total:0.1f}G",
+        "on-click": "kitty -e btop",
         "interval": 2
     },
     "pulseaudio": {

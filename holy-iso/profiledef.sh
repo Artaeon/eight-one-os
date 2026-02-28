@@ -53,4 +53,6 @@ file_permissions=(
   ["/usr/local/bin/holy-windows"]="0:0:755"
   ["/usr/local/bin/holy-dictate"]="0:0:755"
   ["/usr/local/bin/start-hyprland"]="0:0:755"
+  ["/usr/local/bin/holy-theme"]="0:0:755"
+  ["/usr/local/bin/holy-wall"]="0:0:755"
 )

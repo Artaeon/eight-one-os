@@ -1,0 +1,92 @@
+#!/usr/bin/env bash
+# EIGHT.ONE OS — Holy Theme
+# Swap the visual identity of the entire OS on the fly
+
+set -e
+
+# Theme Definitions (Hex Colors)
+declare -A THEMES=(
+    # Matrix Green
+    ["Matrix|00ff41"]="00ff41|00ff4133|4000ff41"
+    # Imperial Gold
+    ["Gold|d4af37"]="d4af37|d4af3733|40d4af37"
+    # Omni Blue (OmArchy)
+    ["Omni|45b7d1"]="45b7d1|45b7d133|4045b7d1"
+    # Blood Red
+    ["Blood|ff3333"]="ff3333|ff333333|40ff3333"
+    # Cyber Purple
+    ["Cyber|b366ff"]="b366ff|b366ff33|40b366ff"
+)
+
+# Render fuzzel menu to select theme
+MENU=""
+for theme_key in "${!THEMES[@]}"; do
+    label="${theme_key%%|*}"
+    color="${theme_key##*|}"
+    MENU+="  $label|${color}\n"
+done
+
+SELECTED=$(echo -e "$MENU" | sort | fuzzel --dmenu \
+    --prompt="  Select Theme ❯ " \
+    --width=30 \
+    --lines=6 \
+    --border-color=d4af37ff \
+    --font="JetBrainsMono Nerd Font:size=14" || true)
+
+[ -z "$SELECTED" ] && exit 0
+
+# Extract the selected label to find colors
+LABEL="${SELECTED%%|*}"
+LABEL=$(echo "$LABEL" | xargs) # trim
+
+# Find matching hexes
+PRIMARY=""
+SECONDARY=""
+TERTIARY=""
+
+for theme_key in "${!THEMES[@]}"; do
+    if [[ "$theme_key" == "${LABEL}|"* ]]; then
+        vals="${THEMES[$theme_key]}"
+        PRIMARY=$(echo "$vals" | cut -d'|' -f1)
+        SECONDARY=$(echo "$vals" | cut -d'|' -f2)
+        TERTIARY=$(echo "$vals" | cut -d'|' -f3)
+        break
+    fi
+done
+
+if [ -z "$PRIMARY" ]; then
+    echo "Invalid theme."
+    exit 1
+fi
+
+echo "Applying $LABEL theme ($PRIMARY)..."
+
+# 1. Update hyprland.conf borders
+HYPR_CONF="$HOME/.config/hypr/hyprland.conf"
+if [ -f "$HYPR_CONF" ]; then
+    sed -i -E "s/col.active_border = rgba\([0-9a-fA-F]{8}\) rgba\([0-9a-fA-F]{8}\)/col.active_border = rgba(${PRIMARY}ff) rgba(${PRIMARY}80)/g" "$HYPR_CONF"
+fi
+
+# 2. Update waybar/style.css
+WAYBAR_STYLE="$HOME/.config/waybar/style.css"
+if [ -f "$WAYBAR_STYLE" ]; then
+    sed -i -E "s/#[0-9a-fA-F]{6}; \/\* holy-theme-primary \*\//#${PRIMARY}; \/\* holy-theme-primary \*\//g" "$WAYBAR_STYLE"
+    sed -i -E "s/#[0-9a-fA-F]{8}; \/\* holy-theme-secondary \*\//#${SECONDARY}; \/\* holy-theme-secondary \*\//g" "$WAYBAR_STYLE"
+fi
+
+# 3. Update holy-menu (Since it's in /usr/local/bin, this requires sudo if run live, but in the skeleton/ISO context we just modify the source)
+MENU_CONF="/usr/local/bin/holy-menu"
+if [ -f "/usr/local/bin/holy-menu" ]; then
+    # We use sudo here just in case the user invokes it on a live system
+    sudo sed -i -E "s/--border-color=[0-9a-fA-F]{8}/--border-color=${PRIMARY}ff/g" "$MENU_CONF"
+    sudo sed -i -E "s/--match-color=[0-9a-fA-F]{8}/--match-color=${PRIMARY}ff/g" "$MENU_CONF"
+    sudo sed -i -E "s/--selection-color=[0-9a-fA-F]{8}/--selection-color=${SECONDARY}/g" "$MENU_CONF"
+    sudo sed -i -E "s/--selection-text-color=[0-9a-fA-F]{8}/--selection-text-color=${PRIMARY}ff/g" "$MENU_CONF"
+fi
+
+# Reload Hyprland and Waybar
+hyprctl reload || true
+pkill waybar; waybar & disown
+
+# Notify User
+notify-send -u normal -t 3000 "Holy Theme Applied" "Switched to $LABEL aesthetic."

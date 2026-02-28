@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+# EIGHT.ONE OS — Holy Wall
+# Choose a custom wallpaper using gum and yazi
+
+set -e
+
+GOLD="\e[33m"
+CYAN="\e[36m"
+RED="\e[31m"
+GREEN="\e[32m"
+DIM="\e[2m"
+BOLD="\e[1m"
+RESET="\e[0m"
+
+clear
+echo -e "${GOLD}${BOLD}"
+figlet -f small "Holy Wall" 2>/dev/null || echo "═══ HOLY WALL ═══"
+echo -e "${RESET}${DIM}Set your custom background${RESET}\n"
+
+# Verify hyprpaper is running
+if ! pgrep -x hyprpaper > /dev/null; then
+    echo -e "${RED}Hyprpaper is not running. Starting it...${RESET}"
+    hyprpaper & disown
+    sleep 1
+fi
+
+echo -e "Press Enter to open the file picker and select an image..."
+read -r
+
+# Use yazi to pick a file
+WALL_PATH=$(yazi --chooser-file=/dev/stdout)
+
+if [ -z "$WALL_PATH" ]; then
+    echo -e "\n${DIM}Cancelled.${RESET}"
+    exit 0
+fi
+
+if [[ ! -f "$WALL_PATH" ]]; then
+    echo -e "\n${RED}Invalid file selected.${RESET}"
+    exit 1
+fi
+
+# Determine active monitors
+MONITORS=$(hyprctl monitors -j | jq -r '.[].name')
+
+echo -e "\n${CYAN}Applying $WALL_PATH to all monitors...${RESET}"
+
+# Preload image
+hyprctl hyprpaper preload "$WALL_PATH" > /dev/null || true
+
+# Set wallpaper for each monitor
+for monitor in $MONITORS; do
+    hyprctl hyprpaper wallpaper "$monitor,$WALL_PATH" > /dev/null
+done
+
+# Persist configuration
+CONF_PATH="$HOME/.config/hypr/hyprpaper.conf"
+echo -e "preload = $WALL_PATH\nwallpaper = ,$WALL_PATH\nsplash = false\nipc = on" > "$CONF_PATH"
+
+# Unload all other preloaded wallpapers except the new one to save RAM
+hyprctl hyprpaper unload all > /dev/null || true
+hyprctl hyprpaper preload "$WALL_PATH" > /dev/null || true
+
+notify-send -u normal -t 3000 "Wallpaper Updated" "Applied new background."
+echo -e "\n${GREEN}✓ Background successfully updated!${RESET}"

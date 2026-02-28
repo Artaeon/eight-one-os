@@ -1,63 +1,49 @@
 // EIGHT.ONE OS Plymouth Boot Script
-// Matrix minimal: pulsing gold text + thin gold progress bar on black
+// Matrix animation: sequential text display on a black background
 
-// ── Screen setup ──
 Window.SetBackgroundTopColor(0.0, 0.0, 0.0);
 Window.SetBackgroundBottomColor(0.0, 0.0, 0.0);
 
 screen_width = Window.GetWidth();
 screen_height = Window.GetHeight();
 
-// ── Centre title: "EIGHT.ONE" in gold ──
-title_image = Image.Text("EIGHT.ONE", 0.0, 1.0, 0.25, 1, "JetBrainsMono Nerd Font 28");
-title_sprite = Sprite(title_image);
-title_sprite.SetX(screen_width / 2 - title_image.GetWidth() / 2);
-title_sprite.SetY(screen_height / 2 - title_image.GetHeight() / 2);
+// ── Text sequence ──
+text_lines = [
+    "Wake up, builder...",
+    "The Matrix has you...",
+    "Follow the white rabbit."
+];
+
+current_line = 0;
+// Plymouth refresh is usually ~50fps. We want each line to show for a bit.
+timer = 0;
+time_per_line = 100; // ~2 seconds per line
+
+title_sprite = Sprite();
 title_sprite.SetZ(10);
 title_sprite.SetOpacity(1.0);
 
-// ── Pulsing animation state ──
-pulse_direction = 1;
-pulse_opacity = 0.5;
-
 fun refresh_callback() {
-    pulse_opacity += pulse_direction * 0.01;
-    if (pulse_opacity >= 1.0) {
-        pulse_opacity = 1.0;
-        pulse_direction = -1;
+    timer++;
+    
+    // Switch to next line depending on time
+    if (timer > time_per_line * (current_line + 1) && current_line < 2) {
+        current_line++;
     }
-    if (pulse_opacity <= 0.5) {
-        pulse_opacity = 0.5;
-        pulse_direction = 1;
-    }
-    title_sprite.SetOpacity(pulse_opacity);
+    
+    // Draw text
+    title_image = Image.Text(text_lines[current_line], 0.0, 1.0, 0.25, 1, "JetBrainsMono Nerd Font 24");
+    title_sprite.SetImage(title_image);
+    title_sprite.SetX(screen_width / 2 - title_image.GetWidth() / 2);
+    title_sprite.SetY(screen_height / 2 - title_image.GetHeight() / 2);
 }
 
 Plymouth.SetRefreshFunction(refresh_callback);
 
-// ── Progress bar: thin gold line below title ──
-progress_bar = Sprite();
-bar_y = screen_height / 2 + title_image.GetHeight() / 2 + 30;
-bar_total_width = screen_width * 0.5;
-bar_x = screen_width / 2 - bar_total_width / 2;
-
+// ── Suppress standard output ──
 fun progress_callback(duration, progress) {
-    if (progress > 0) {
-        bar_width = Math.Int(bar_total_width * progress);
-        if (bar_width < 1) bar_width = 1;
-        bar_image = Image.Text("", 0.0, 1.0, 0.25);
-        bar_image = bar_image.Scale(bar_width, 3);
-        progress_bar.SetImage(bar_image);
-        progress_bar.SetX(bar_x);
-        progress_bar.SetY(bar_y);
-        progress_bar.SetZ(20);
-        progress_bar.SetOpacity(0.8);
-    }
 }
 
-Plymouth.SetBootProgressFunction(progress_callback);
-
-// ── Suppress messages for clean boot ──
 fun message_callback(text) {
 }
 
@@ -72,5 +58,6 @@ fun display_password_callback(prompt, bullets) {
     pw_sprite.SetZ(30);
 }
 
+Plymouth.SetBootProgressFunction(progress_callback);
 Plymouth.SetMessageFunction(message_callback);
 Plymouth.SetDisplayPasswordFunction(display_password_callback);
