@@ -1,0 +1,6 @@
+[Unit]
+Description=EIGHT.ONE OS Daily Planner Reminder Service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash -c 'if [ ! -f "%h/Vault/Daily/$(date +%%Y-%%m-%%d).md" ]; then notify-send -u critical -t 0 "A day without a plan is a wasted day" "Press SUPER+J to start your 60-second Holy Jot."; fi'

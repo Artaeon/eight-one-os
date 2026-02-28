@@ -104,9 +104,11 @@ jq
 procs
 ripgrep
 yazi
-# Round 3 additions
+# Round 3 & 4 additions
 khal
 vdirsyncer
+curl
+libnotify
 
 # ── Networking ──
 networkmanager

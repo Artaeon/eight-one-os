@@ -11,6 +11,7 @@
         "clock"
     ],
     "modules-right": [
+        "custom/jot",
         "custom/recording",
         "cpu",
         "memory",
@@ -124,6 +125,11 @@
         "return-type": "json",
         "interval": 2,
         "on-click": "holy-record toggle"
+    },
+    "custom/jot": {
+        "format": "🖊️ Jot",
+        "tooltip-format": "A day without a plan is a wasted day.",
+        "on-click": "kitty --title 'Holy Jot' -e holy-jot"
     },
     "tray": {
         "icon-size": 14,

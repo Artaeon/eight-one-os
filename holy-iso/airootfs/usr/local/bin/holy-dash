@@ -1,23 +1,50 @@
 #!/usr/bin/env bash
 # EIGHT.ONE OS — Holy Dash
-# Builder's project dashboard — see all your projects at a glance
+# Builder's master dashboard — weather, agenda, tasks, and projects
 # Usage: holy-dash
 
 GOLD="\e[33m"
 CYAN="\e[36m"
 GREEN="\e[32m"
 RED="\e[31m"
-YELLOW="\e[33m"
 DIM="\e[2m"
 BOLD="\e[1m"
 RESET="\e[0m"
 
 PROJECTS_DIR="$HOME/Projects"
+VAULT_DIR="$HOME/Vault"
 
 clear
 echo -e "${GOLD}${BOLD}"
 figlet -f small "Holy Dash" 2>/dev/null || echo "═══ HOLY DASH ═══"
-echo -e "${RESET}${DIM}Your Builder Dashboard${RESET}\n"
+echo -e "${RESET}${DIM}Let all things be done decently and in order.${RESET}\n"
+
+# --- 1. Top Section Overview ---
+echo -e "${CYAN}── Insight ──${RESET}\n"
+
+# Weather
+# Only fetch if connected to internet
+if ping -c 1 8.8.8.8 >/dev/null 2>&1; then
+    WEATHER=$(curl -s "wttr.in/?format=3" 2>/dev/null || echo "Weather unavailable")
+    echo -e "${BOLD}Condition:${RESET} $WEATHER"
+else
+    echo -e "${BOLD}Condition:${RESET} Offline"
+fi
+
+# Next Event
+if command -v khal >/dev/null 2>&1; then
+    AGENDA=$(khal list today tomorrow 2>/dev/null | head -n 3 | grep -v 'No events' || echo "  No immediate events.")
+    echo -e "${BOLD}Agenda:${RESET}\n$AGENDA"
+else
+    echo -e "${BOLD}Agenda:${RESET} Khal not configured."
+fi
+
+# Open Tasks
+OPEN_TASKS=$(grep -rn "^\s*- \[ \]" "$VAULT_DIR" 2>/dev/null | wc -l || true)
+echo -e "${BOLD}Open Tasks:${RESET} $OPEN_TASKS outstanding\n"
+
+# --- 2. Projects Section ---
+echo -e "${CYAN}── Projects ──${RESET}\n"
 
 # Gather all git repos
 repos=()
@@ -43,11 +70,8 @@ for repo in "${repos[@]}"; do
 
     # Get git status
     cd "$repo" 2>/dev/null || continue
-
-    # Branch
     branch=$(git branch --show-current 2>/dev/null || echo "detached")
 
-    # Status indicators
     dirty=""
     staged=$(git diff --cached --numstat 2>/dev/null | wc -l)
     unstaged=$(git diff --numstat 2>/dev/null | wc -l)
@@ -58,11 +82,8 @@ for repo in "${repos[@]}"; do
     if [ "$untracked" -gt 0 ]; then dirty="${dirty}?${untracked} "; fi
     [ -z "$dirty" ] && dirty="✓ clean"
 
-    # Last commit
     last_commit=$(git log -1 --format="%ar" 2>/dev/null || echo "no commits")
-    last_msg=$(git log -1 --format="%s" 2>/dev/null | cut -c1-40 || echo "")
-
-    # Detect language
+    
     lang=""
     [ -f "Cargo.toml" ] && lang="🦀"
     [ -f "package.json" ] && lang="📦"
@@ -77,10 +98,7 @@ done
 
 cd "$HOME" || exit
 
-# Show the list
-echo -e "${CYAN}${#repos[@]} projects found:${RESET}\n"
-
-SELECTED=$(printf '%s\n' "${display_items[@]}" | gum choose --height 20)
+SELECTED=$(printf '%s\n' "${display_items[@]}" | gum choose --height 12)
 
 if [ -z "$SELECTED" ]; then
     exit 0
@@ -112,15 +130,9 @@ ACTION=$(gum choose \
     "← Back")
 
 case "$ACTION" in
-    *"Neovim"*)
-        cd "$selected_repo" && exec nvim .
-        ;;
-    *"git log"*)
-        cd "$selected_repo" && git log --oneline -20 | gum pager
-        ;;
-    *"status"*)
-        cd "$selected_repo" && git status | gum pager
-        ;;
+    *"Neovim"*) cd "$selected_repo" && exec nvim . ;;
+    *"git log"*) cd "$selected_repo" && git log --oneline -20 | gum pager ;;
+    *"status"*) cd "$selected_repo" && git status | gum pager ;;
     *"shell"*)
         echo -e "${CYAN}Opening shell in $selected_repo${RESET}"
         echo -e "${DIM}Type 'exit' to return.${RESET}\n"

@@ -126,6 +126,12 @@ tooltip {
     padding: 0 8px;
 }
 
+#custom-jot {
+    color: #e8e6df;
+    padding: 0 12px;
+    font-weight: bold;
+}
+
 #custom-recording.recording {
     animation: blink 1s infinite;
 }

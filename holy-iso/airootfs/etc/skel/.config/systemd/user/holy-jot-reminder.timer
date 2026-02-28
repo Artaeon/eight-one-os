@@ -1,0 +1,12 @@
+[Unit]
+Description=EIGHT.ONE OS Daily Planner Reminder Timer
+
+[Timer]
+# Fire at 09:00 AM every single day.
+# Also fire every hour after that if it was missed, but the service handles the logic.
+OnCalendar=*-*-* 09:00:00
+OnCalendar=*-*-* 10..23:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target
