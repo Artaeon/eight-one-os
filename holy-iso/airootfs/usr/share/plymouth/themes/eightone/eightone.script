@@ -2,14 +2,14 @@
 // Matrix minimal: pulsing gold text + thin gold progress bar on black
 
 // ── Screen setup ──
-Window.SetBackgroundTopColor(0.04, 0.04, 0.06);
+Window.SetBackgroundTopColor(0.0, 0.0, 0.0);
 Window.SetBackgroundBottomColor(0.0, 0.0, 0.0);
 
 screen_width = Window.GetWidth();
 screen_height = Window.GetHeight();
 
 // ── Centre title: "EIGHT.ONE" in gold ──
-title_image = Image.Text("EIGHT.ONE", 0.83, 0.69, 0.22, 1, "JetBrainsMono Nerd Font 28");
+title_image = Image.Text("EIGHT.ONE", 0.0, 1.0, 0.25, 1, "JetBrainsMono Nerd Font 28");
 title_sprite = Sprite(title_image);
 title_sprite.SetX(screen_width / 2 - title_image.GetWidth() / 2);
 title_sprite.SetY(screen_height / 2 - title_image.GetHeight() / 2);
@@ -45,7 +45,7 @@ fun progress_callback(duration, progress) {
     if (progress > 0) {
         bar_width = Math.Int(bar_total_width * progress);
         if (bar_width < 1) bar_width = 1;
-        bar_image = Image.Text("", 0.83, 0.69, 0.22);
+        bar_image = Image.Text("", 0.0, 1.0, 0.25);
         bar_image = bar_image.Scale(bar_width, 3);
         progress_bar.SetImage(bar_image);
         progress_bar.SetX(bar_x);
@@ -65,7 +65,7 @@ fun display_password_callback(prompt, bullets) {
     bullet_text = "";
     for (i = 0; i < bullets; i++)
         bullet_text += "*";
-    pw_image = Image.Text(bullet_text, 0.83, 0.69, 0.22, 1, "JetBrainsMono Nerd Font 18");
+    pw_image = Image.Text(bullet_text, 0.0, 1.0, 0.25, 1, "JetBrainsMono Nerd Font 18");
     pw_sprite = Sprite(pw_image);
     pw_sprite.SetX(screen_width / 2 - pw_image.GetWidth() / 2);
     pw_sprite.SetY(screen_height / 2 + 80);

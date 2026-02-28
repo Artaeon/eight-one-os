@@ -77,7 +77,7 @@
         "format-linked": "  {ifname}",
         "format-disconnected": "offline",
         "tooltip-format": "{ifname}: {ipaddr}/{cidr}",
-        "on-click": "kitty --title 'Network' -e /usr/local/bin/holy-wifi"
+        "on-click": "kitty --title 'Network' --hold -e /usr/local/bin/holy-wifi"
     },
     "battery": {
         "states": {
