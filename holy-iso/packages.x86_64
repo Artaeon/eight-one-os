@@ -181,7 +181,7 @@ libreoffice-fresh
 chromium
 
 # ── Sharing ──
-localsend
+# localsend  # AUR-only — install post-boot via yay/paru
 
 # ── Dev Environments ──
 mise
