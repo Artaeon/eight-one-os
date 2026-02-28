@@ -1,0 +1,130 @@
+#!/usr/bin/env bash
+# EIGHT.ONE OS — Holy Planner
+# Matrix-styled CLI dashboard for Obsidian Tasks, Notes, and Khal Calendar integration
+
+set -euo pipefail
+
+GOLD="\e[33m"
+CYAN="\e[36m"
+GREEN="\e[32m"
+DIM="\e[2m"
+BOLD="\e[1m"
+RESET="\e[0m"
+
+VAULT_DIR="$HOME/Vault"
+mkdir -p "$VAULT_DIR/Daily"
+
+function show_header() {
+    clear
+    echo -e "${GREEN}${BOLD}"
+    figlet -f small "Holy Planner" 2>/dev/null || echo "═══ HOLY PLANNER ═══"
+    echo -e "${RESET}${DIM}Command Center for Time and Intellect${RESET}\n"
+}
+
+function manage_tasks() {
+    show_header
+    echo -e "${CYAN}── Open Tasks in Vault ──${RESET}\n"
+    
+    # Simple grep to find open markdown tasks
+    # format: file:line: - [ ] task
+    TASKS=$(grep -rn "^\s*- \[ \]" "$VAULT_DIR" || true)
+    
+    if [ -z "$TASKS" ]; then
+        echo -e "${DIM}No open tasks found. Rest well, builder.${RESET}\n"
+        read -p "Press Enter to return..."
+        return
+    fi
+    
+    # Process and present tasks via gum choose
+    declare -A TASK_MAP
+    CHOICES=""
+    
+    while IFS= read -r line; do
+        FILE=$(echo "$line" | cut -d: -f1)
+        LINENUM=$(echo "$line" | cut -d: -f2)
+        CONTENT=$(echo "$line" | cut -d: -f3-)
+        
+        # Clean paths for display
+        REL_FILE=${FILE#$VAULT_DIR/}
+        CLEAN_CONTENT=$(echo "$CONTENT" | sed 's/^[ \t]*//')
+        
+        LABEL="[${REL_FILE}] $CLEAN_CONTENT"
+        CHOICES+="$LABEL\n"
+        TASK_MAP["$LABEL"]="$FILE:$LINENUM"
+    done <<< "$TASKS"
+    
+    SELECTED=$(echo -e "$CHOICES" | grep -v '^$' | gum choose --no-limit --header="Select tasks to MARK COMPLETE:" --cursor="❯ " --selected-prefix="◉ " --unselected-prefix="○ ")
+    
+    if [ -n "$SELECTED" ]; then
+        while IFS= read -r sel; do
+            TARGET=${TASK_MAP["$sel"]}
+            T_FILE=$(echo "$TARGET" | cut -d: -f1)
+            T_LINE=$(echo "$TARGET" | cut -d: -f2)
+            
+            # Using sed to replace [ ] with [x]
+            sed -i "${T_LINE}s/\[ \]/\[x\]/" "$T_FILE"
+            echo -e "${GREEN}✓ Completed:${RESET} $sel"
+        done <<< "$SELECTED"
+        sleep 1
+    fi
+}
+
+function view_agenda() {
+    show_header
+    echo -e "${CYAN}── Agenda (Khal) ──${RESET}\n"
+    
+    if command -v khal >/dev/null 2>&1; then
+        khal agenda || echo -e "${DIM}No events or Khal not configured yet. Run 'khal configure' to setup.${RESET}"
+    else
+        echo -e "${RED}Khal is not installed. Please rebuild the ISO or 'sudo pacman -S khal'.${RESET}"
+    fi
+    
+    echo -e "\n"
+    read -p "Press Enter to return..."
+}
+
+function search_notes() {
+    show_header
+    echo -e "${CYAN}── Vault Intellect ──${RESET}\n"
+    
+    # Use fzf/gum to search files or create new
+    CHOICE=$(gum choose "Search/Open Note" "Create New Note" "Go Back")
+    
+    if [[ "$CHOICE" == "Search/Open Note" ]]; then
+        if command -v fzf >/dev/null; then
+            FILE=$(find "$VAULT_DIR" -type f -name "*.md" | fzf --prompt="Note ❯ ")
+            [ -n "$FILE" ] && nvim "$FILE"
+        else
+            FILE=$(find "$VAULT_DIR" -type f -name "*.md" | gum choose --header="Select Note")
+            [ -n "$FILE" ] && nvim "$FILE"
+        fi
+    elif [[ "$CHOICE" == "Create New Note" ]]; then
+        NAME=$(gum input --placeholder "Note Title (without .md)")
+        if [ -n "$NAME" ]; then
+            # Format name
+            FNAME=$(echo "$NAME" | tr ' ' '-' | tr '[:upper:]' '[:lower:]')
+            TARGET="$VAULT_DIR/${FNAME}.md"
+            echo -e "# $NAME\n\n" > "$TARGET"
+            nvim "$TARGET"
+        fi
+    fi
+}
+
+# Main Loop
+while true; do
+    show_header
+    MAIN_OPT=$(gum choose \
+        "1. Daily Jot (60s Planner)" \
+        "2. Obsidian Tasks" \
+        "3. Calendar Agenda" \
+        "4. Search/Create Notes" \
+        "5. Exit")
+    
+    case "$MAIN_OPT" in
+        "1"*) holy-jot ;;
+        "2"*) manage_tasks ;;
+        "3"*) view_agenda ;;
+        "4"*) search_notes ;;
+        "5"*) clear; exit 0 ;;
+    esac
+done

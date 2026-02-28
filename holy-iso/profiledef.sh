@@ -55,4 +55,6 @@ file_permissions=(
   ["/usr/local/bin/start-hyprland"]="0:0:755"
   ["/usr/local/bin/holy-theme"]="0:0:755"
   ["/usr/local/bin/holy-wall"]="0:0:755"
+  ["/usr/local/bin/holy-jot"]="0:0:755"
+  ["/usr/local/bin/holy-planner"]="0:0:755"
 )

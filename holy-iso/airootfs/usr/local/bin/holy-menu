@@ -48,10 +48,12 @@ SELECTED_CATEGORY=$(printf "%s\n" "${CATEGORIES[@]}" | fuzzel "${FUZZEL_OPTS[@]}
 case "$SELECTED_CATEGORY" in
     "Apps")
         declare -A ACTIONS=(
-            ["Terminal"]="kitty"
-            ["Browser"]="holy-browser"
-            ["IDE"]="holy-ide"
-            ["Files"]="kitty -e yazi"
+            ["Holy Planner"]="kitty --title 'Holy Planner' -e holy-planner"
+            ["Daily Jot"]="kitty --title 'Holy Jot' -e holy-jot"
+            ["Terminal (Kitty)"]="kitty"
+            ["Web Browser"]="holy-browser"
+            ["Editor (Neovim)"]="kitty -e nvim"
+            ["Files (Yazi)"]="kitty -e yazi"
             ["Obsidian"]="obsidian"
         )
         ;;

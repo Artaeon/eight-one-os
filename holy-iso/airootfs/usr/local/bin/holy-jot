@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+# EIGHT.ONE OS — Holy Jot
+# "A day without a plan is a wasted day."
+# 60-second forced intensive daily planning that logs directly to Obsidian.
+
+set -euo pipefail
+
+# Theme Colors
+GOLD="\e[33m"
+CYAN="\e[36m"
+GREEN="\e[32m"
+RED="\e[31m"
+DIM="\e[2m"
+BOLD="\e[1m"
+RESET="\e[0m"
+
+# Obsidian Path
+VAULT_DIR="$HOME/Vault"
+DAILY_DIR="$VAULT_DIR/Daily"
+TODAY=$(date +%Y-%m-%d)
+JOT_FILE="$DAILY_DIR/$TODAY.md"
+
+mkdir -p "$DAILY_DIR"
+
+clear
+echo -e "${GOLD}${BOLD}"
+figlet -f small "Holy Jot" 2>/dev/null || echo "═══ HOLY JOT ═══"
+echo -e "${RESET}${DIM}A day without a plan is a wasted day.${RESET}\n"
+
+echo -e "${RED}${BOLD}You have exactly 60 seconds to outline your day.${RESET}"
+echo -e "${DIM}Write your top priorities. The window will forcefully close when time is up.${RESET}\n"
+echo -e "${CYAN}Press Enter when ready...${RESET}"
+read -r
+
+clear
+echo -e "${GOLD}${BOLD}[ 60 SECONDS ]${RESET}\n"
+
+# Create a temporary file to capture input
+TMP_FILE=$(mktemp)
+
+# Start a background timer that will kill this script after 60s
+(
+    sleep 60
+    
+    # Save whatever was written so far before killing
+    if [ -s "$TMP_FILE" ]; then
+        echo -e "\n\n## Daily Jot ($TODAY)\n" >> "$JOT_FILE"
+        cat "$TMP_FILE" >> "$JOT_FILE"
+    fi
+    
+    # Forcefully kill the entire process group
+    kill -9 $$ 2>/dev/null || true
+) &
+TIMER_PID=$!
+
+# Use gum to write the outline
+gum write --placeholder "1. [ ] Focus block: Architecture design...
+2. [ ] ... " --width 80 > "$TMP_FILE"
+
+# If the user finishes before 60 seconds, kill the timer
+kill $TIMER_PID 2>/dev/null || true
+
+# Append to today's log
+if [ -s "$TMP_FILE" ]; then
+    echo -e "\n\n## Daily Jot ($TODAY)\n" >> "$JOT_FILE"
+    cat "$TMP_FILE" >> "$JOT_FILE"
+    echo -e "\n${GREEN}✓ Saved to $JOT_FILE${RESET}"
+else
+    echo -e "\n${DIM}Nothing written. Day unplanned.${RESET}"
+fi
+
+rm -f "$TMP_FILE"
+sleep 2
