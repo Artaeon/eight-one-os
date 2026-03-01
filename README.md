@@ -10,7 +10,7 @@
 
 ---
 
-EIGHT.ONE OS is an opinionated Arch Linux distribution built with `archiso`. It ships a complete Hyprland desktop, an AI-integrated IDE, and 27 custom TUI utilities — all configured and themed out of the box. No post-install configuration required. Targets the Matebook (Ryzen 3500U, 8GB RAM) with aggressive power and memory optimization.
+EIGHT.ONE OS is an opinionated Arch Linux distribution built with `archiso`. It ships a complete Hyprland desktop, an AI-integrated IDE, and 27 custom TUI utilities — all configured and themed out of the box. No post-install configuration required. Targets the Matebook (Ryzen 3500U, 8 / 16GB RAM) with aggressive power and memory optimization.
 
 ## Overview
 
