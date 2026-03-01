@@ -1,0 +1,79 @@
+# EIGHT.ONE OS — GRUB Theme (ISO Boot)
+# Matrix palette: #0a0a0f, #d4af37, #e8e6df, #2a2a2a
+# Font references removed — GRUB uses the loaded unicode.pf2 at boot stage
+
+title-text: ""
+desktop-image: "background.png"
+desktop-color: "#0a0a0f"
+message-color: "#00FF41"
+message-bg-color: "#0a0a0f"
+
+# Title
++ label {
+    text = "EIGHT.ONE OS"
+    color = "#00FF41"
+    align = "center"
+    top = 20%
+    left = 0
+    width = 100%
+}
+
+# Subtitle
++ label {
+    text = "[ Infinity One ]"
+    color = "#595959"
+    align = "center"
+    top = 26%
+    left = 0
+    width = 100%
+}
+
+# Boot menu — centered
++ boot_menu {
+    left = 25%
+    top = 35%
+    width = 50%
+    height = 40%
+    item_color = "#e8e6df"
+    selected_item_color = "#000000"
+    item_height = 40
+    item_spacing = 8
+    item_padding = 16
+    icon_width = 0
+    icon_height = 0
+    selected_item_pixmap_style = "select_*.png"
+    scrollbar = false
+}
+
+# Timeout progress bar
++ progress_bar {
+    id = "__timeout__"
+    left = 35%
+    top = 82%
+    width = 30%
+    height = 14
+    show_text = true
+    text_color = "#e8e6df"
+    fg_color = "#00FF41"
+    bg_color = "#2a2a2a"
+    border_color = "#2a2a2a"
+}
+
+# Bottom branding
++ label {
+    text = "BTRFS Snapshots available via submenu"
+    color = "#595959"
+    align = "center"
+    top = 90%
+    left = 0
+    width = 100%
+}
+
++ label {
+    text = "Infinity One"
+    color = "#2a2a2a"
+    align = "center"
+    top = 94%
+    left = 0
+    width = 100%
+}
