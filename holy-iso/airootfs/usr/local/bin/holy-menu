@@ -1,149 +1,101 @@
 #!/usr/bin/env bash
-# EIGHT.ONE OS — Command Palette (OmArchy Style)
+# EIGHT.ONE OS — Command Palette (flat searchable list)
 # Central command menu — access every tool and action from one place
-# Triggered via Alt+Super+Space
+# Triggered via Ctrl+Super+Space
 
 set -euo pipefail
 
-# ── fuzzel configuration ──
+# ── fuzzel styling ──
 FUZZEL_OPTS=(
     --dmenu
-    --prompt="  "
-    --width=70
-    --lines=25
-    --horizontal-pad=40
-    --vertical-pad=20
-    --inner-pad=12
+    --prompt=""
+    --width=50
+    --lines=18
+    --horizontal-pad=24
+    --vertical-pad=16
+    --inner-pad=8
     --border-width=2
-    --border-radius=16
+    --border-radius=0
     --border-color=00ff41ff
     --background=0a0a0fee
     --text-color=e8e6dfff
     --match-color=00ff41ff
-    --selection-color=00ff4133
+    --selection-color=00ff4122
     --selection-text-color=00ff41ff
-    --font="JetBrainsMono Nerd Font:size=14"
+    --font="JetBrainsMono Nerd Font:size=13"
 )
 
-# ── Categories ──
-CATEGORIES=(
-    "Apps"
-    "Learn"
-    "Trigger"
-    "Style"
-    "Setup"
-    "Install"
-    "Remove"
-    "Update"
-    "About"
-    "System"
+# ── Flat command list (icon  label) ──
+declare -A COMMANDS=(
+    # Apps
+    ["  Terminal"]="kitty"
+    ["  Web Browser"]="holy-browser"
+    ["  File Manager"]="kitty -e yazi"
+    ["  Obsidian"]="obsidian"
+    ["  Editor"]="kitty -e nvim"
+    ["  IDE"]="holy-ide"
+
+    # Builder
+    ["  Daily Jot"]="kitty --title 'Holy Jot' -e holy-jot"
+    ["  Planner"]="kitty --title 'Holy Planner' -e holy-planner"
+    ["  Dashboard"]="kitty --title 'Holy Dash' -e holy-dash"
+    ["  Flow Timer"]="kitty -e holy-flow tui"
+    ["  Focus Mode"]="kitty -e holy-focus builder"
+    ["  Project"]="holy-project"
+
+    # AI & Learn
+    ["  AI Assistant"]="kitty --title 'Holy AI' -e holy-ai"
+    ["  Bible"]="kitty -e holy-bible"
+
+    # Tools
+    ["  Dictation"]="holy-dictate toggle"
+    ["  Record Screen"]="holy-record toggle"
+    ["  Screenshot"]="grim -g \"\$(slurp)\" - | wl-copy"
+    ["  Clipboard"]="cliphist list | fuzzel --dmenu | cliphist decode | wl-copy"
+
+    # Style
+    ["  Theme"]="kitty -e holy-theme"
+    ["  Wallpaper"]="kitty --title 'Holy Wall' -e holy-wall"
+    ["  Vibes"]="kitty -e holy-vibes"
+
+    # Setup
+    ["  Settings"]="kitty -e holy-settings"
+    ["  WiFi"]="kitty -e holy-wifi"
+    ["  Bluetooth"]="kitty -e holy-bluetooth"
+    ["  Display"]="kitty -e holy-display"
+    ["  SSH Keys"]="kitty -e holy-ssh"
+    ["  Dev Tools"]="kitty --title 'Holy Dev' -e holy-dev"
+
+    # System
+    ["  System Monitor"]="kitty -e btop"
+    ["  System Update"]="kitty --hold -e eightone-update"
+    ["  System Info"]="kitty --hold -e fastfetch"
+    ["  AUR Package"]="kitty -e holy-aur"
+    ["  Notifications"]="kitty -e holy-notify"
+    ["  Keyboard Shortcuts"]="kitty --title 'Holy Keys' -e holy-keys"
+    ["  Windows VM"]="kitty --title 'Holy Windows' -e holy-windows"
+
+    # Power
+    ["  Lock Screen"]="hyprlock"
+    ["  Suspend"]="systemctl suspend"
+    ["  Reboot"]="systemctl reboot"
+    ["  Shutdown"]="systemctl poweroff"
+    ["  Logout"]="hyprctl dispatch exit"
 )
 
-# Show main category menu
-SELECTED_CATEGORY=$(printf "%s\n" "${CATEGORIES[@]}" | fuzzel "${FUZZEL_OPTS[@]}")
-
-[ -z "$SELECTED_CATEGORY" ] && exit 0
-
-# ── Actions based on category ──
-case "$SELECTED_CATEGORY" in
-    "Apps")
-        declare -A ACTIONS=(
-            ["Holy Planner"]="kitty --title 'Holy Planner' -e holy-planner"
-            ["Daily Jot"]="kitty --title 'Holy Jot' -e holy-jot"
-            ["Terminal (Kitty)"]="kitty"
-            ["Web Browser"]="holy-browser"
-            ["Editor (Neovim)"]="kitty -e nvim"
-            ["Files (Yazi)"]="kitty -e yazi"
-            ["Obsidian"]="obsidian"
-        )
-        ;;
-    "Learn")
-        declare -A ACTIONS=(
-            ["Bible"]="kitty -e holy-bible"
-            ["Dashboard"]="kitty --title 'Holy Dash' -e holy-dash"
-        )
-        ;;
-    "Trigger")
-        declare -A ACTIONS=(
-            ["Flow Timer"]="kitty -e holy-flow tui"
-            ["Focus Mode"]="kitty -e holy-focus builder"
-            ["AI Assistant"]="kitty --title 'Holy AI' -e holy-ai"
-            ["Voice Dictation"]="holy-dictate toggle"
-        )
-        ;;
-    "Style")
-        declare -A ACTIONS=(
-            ["Settings"]="kitty -e holy-settings"
-            ["Vibes"]="kitty -e holy-vibes"
-        )
-        ;;
-    "Setup")
-        declare -A ACTIONS=(
-            ["WiFi"]="kitty -e holy-wifi"
-            ["Bluetooth"]="kitty -e holy-bluetooth"
-            ["Display"]="kitty -e holy-display"
-            ["Wallpaper"]="kitty --title 'Holy Wall' -e holy-wall"
-            ["SSH Keys"]="kitty -e holy-ssh"
-            ["Dev Tools"]="kitty --title 'Holy Dev' -e holy-dev"
-        )
-        ;;
-    "Install")
-        declare -A ACTIONS=(
-            ["AUR Package"]="kitty -e holy-aur"
-            ["Flatpak Package"]="kitty -e bash -c 'flatpak search \"\$(gum input --placeholder \"Search Flatpak...\")\" && read'"
-        )
-        ;;
-    "Remove")
-        declare -A ACTIONS=(
-            ["Pacman Package"]="kitty -e bash -c 'sudo pacman -Rns \$(pacman -Qq | gum filter) && read'"
-            ["Flatpak Package"]="kitty -e bash -c 'flatpak uninstall \$(flatpak list --app --columns=application | gum filter) && read'"
-        )
-        ;;
-    "Update")
-        declare -A ACTIONS=(
-            ["System Update"]="kitty --hold -e eightone-update"
-        )
-        ;;
-    "About")
-        declare -A ACTIONS=(
-            ["System Info"]="kitty --hold -e fastfetch"
-        )
-        ;;
-    "System")
-        declare -A ACTIONS=(
-            ["System Monitor"]="kitty -e btop"
-            ["Disk Usage"]="kitty -e dust"
-            ["Processes"]="kitty -e procs"
-            ["Record Screen"]="holy-record toggle"
-            ["Notifications"]="kitty -e holy-notify"
-            ["Clipboard"]="cliphist list | fuzzel --dmenu | cliphist decode | wl-copy"
-            ["Windows VM"]="kitty --title 'Holy Windows' -e holy-windows"
-            ["Lock Screen"]="hyprlock"
-            ["Suspend"]="systemctl suspend"
-            ["Reboot"]="systemctl reboot"
-            ["Shutdown"]="systemctl poweroff"
-            ["Logout"]="hyprctl dispatch exit"
-        )
-        ;;
-    *)
-        exit 0
-        ;;
-esac
-
-# Build items list
+# Build sorted list
 ITEMS=""
-for item in "${!ACTIONS[@]}"; do
+for item in "${!COMMANDS[@]}"; do
     ITEMS+="${item}\n"
 done
 
-# Show second level menu
-SELECTED_ACTION=$(echo -e "$ITEMS" | sort | fuzzel "${FUZZEL_OPTS[@]}" --prompt="  $SELECTED_CATEGORY ❯ ")
+# Show menu
+SELECTED=$(echo -e "$ITEMS" | sort | fuzzel "${FUZZEL_OPTS[@]}")
 
-[ -z "$SELECTED_ACTION" ] && exit 0
+[ -z "$SELECTED" ] && exit 0
 
-# Execute selected action
-CMD="${ACTIONS[$SELECTED_ACTION]}"
+# Execute selected command
+CMD="${COMMANDS[$SELECTED]}"
 if [ -n "$CMD" ]; then
     eval "exec $CMD" &
 fi
-
