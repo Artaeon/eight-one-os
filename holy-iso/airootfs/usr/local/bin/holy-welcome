@@ -108,6 +108,8 @@ step_region() {
 
     # Apply keyboard layout immediately to Hyprland
     hyprctl keyword input:kb_layout "$KB_LAYOUT" 2>/dev/null || true
+    # Persist to hyprland.conf so it survives reboot
+    sed -i "s/kb_layout = .*/kb_layout = $KB_LAYOUT/" "$HOME/.config/hypr/hyprland.conf" 2>/dev/null || true
     # Also update console keymap
     sudo loadkeys "$KB_LAYOUT" 2>/dev/null || true
 

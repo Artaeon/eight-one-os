@@ -1,0 +1,10 @@
+root:x:0:root
+wheel:x:998:holy
+video:x:986:holy
+audio:x:985:holy
+optical:x:990:holy
+storage:x:987:holy
+input:x:989:holy
+network:x:984:holy
+users:x:984:holy
+holy:x:1000:

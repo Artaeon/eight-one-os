@@ -8,7 +8,7 @@ set -euo pipefail
 # ── fuzzel styling ──
 FUZZEL_OPTS=(
     --dmenu
-    --prompt=""
+    --prompt="> "
     --width=50
     --lines=18
     --horizontal-pad=24
@@ -25,62 +25,63 @@ FUZZEL_OPTS=(
     --font="JetBrainsMono Nerd Font:size=13"
 )
 
-# ── Flat command list (icon  label) ──
+# ── Flat command list ──
+# Using simple text labels for reliable rendering across all environments
 declare -A COMMANDS=(
     # Apps
-    ["  Terminal"]="kitty"
-    ["  Web Browser"]="holy-browser"
-    ["  File Manager"]="kitty -e yazi"
-    ["  Obsidian"]="obsidian"
-    ["  Editor"]="kitty -e nvim"
-    ["  IDE"]="holy-ide"
+    ["Terminal"]="kitty"
+    ["Browser"]="holy-browser"
+    ["Files"]="kitty -e yazi"
+    ["Obsidian"]="obsidian"
+    ["Editor"]="kitty -e nvim"
+    ["IDE"]="holy-ide"
 
     # Builder
-    ["  Daily Jot"]="kitty --title 'Holy Jot' -e holy-jot"
-    ["  Planner"]="kitty --title 'Holy Planner' -e holy-planner"
-    ["  Dashboard"]="kitty --title 'Holy Dash' -e holy-dash"
-    ["  Flow Timer"]="kitty -e holy-flow tui"
-    ["  Focus Mode"]="kitty -e holy-focus builder"
-    ["  Project"]="holy-project"
+    ["Jot"]="kitty --title 'Holy Jot' -e holy-jot"
+    ["Planner"]="kitty --title 'Holy Planner' -e holy-planner"
+    ["Dashboard"]="kitty --title 'Holy Dash' -e holy-dash"
+    ["Flow Timer"]="kitty -e holy-flow tui"
+    ["Focus Mode"]="kitty -e holy-focus builder"
+    ["Project"]="holy-project"
 
     # AI & Learn
-    ["  AI Assistant"]="kitty --title 'Holy AI' -e holy-ai"
-    ["  Bible"]="kitty -e holy-bible"
+    ["AI Assistant"]="kitty --title 'Holy AI' -e holy-ai"
+    ["Bible"]="kitty -e holy-bible"
 
     # Tools
-    ["  Dictation"]="holy-dictate toggle"
-    ["  Record Screen"]="holy-record toggle"
-    ["  Screenshot"]="grim -g \"\$(slurp)\" - | wl-copy"
-    ["  Clipboard"]="cliphist list | fuzzel --dmenu | cliphist decode | wl-copy"
+    ["Dictation"]="holy-dictate toggle"
+    ["Record Screen"]="holy-record toggle"
+    ["Screenshot"]="grim -g \"\$(slurp)\" - | wl-copy"
+    ["Clipboard"]="cliphist list | fuzzel --dmenu | cliphist decode | wl-copy"
 
     # Style
-    ["  Theme"]="kitty -e holy-theme"
-    ["  Wallpaper"]="kitty --title 'Holy Wall' -e holy-wall"
-    ["  Vibes"]="kitty -e holy-vibes"
+    ["Theme"]="kitty -e holy-theme"
+    ["Wallpaper"]="kitty --title 'Holy Wall' -e holy-wall"
+    ["Vibes"]="kitty -e holy-vibes"
 
     # Setup
-    ["  Settings"]="kitty -e holy-settings"
-    ["  WiFi"]="kitty -e holy-wifi"
-    ["  Bluetooth"]="kitty -e holy-bluetooth"
-    ["  Display"]="kitty -e holy-display"
-    ["  SSH Keys"]="kitty -e holy-ssh"
-    ["  Dev Tools"]="kitty --title 'Holy Dev' -e holy-dev"
+    ["Settings"]="kitty -e holy-settings"
+    ["WiFi"]="kitty -e holy-wifi"
+    ["Bluetooth"]="kitty -e holy-bluetooth"
+    ["Display"]="kitty -e holy-display"
+    ["SSH Keys"]="kitty -e holy-ssh"
+    ["Dev Tools"]="kitty --title 'Holy Dev' -e holy-dev"
 
     # System
-    ["  System Monitor"]="kitty -e btop"
-    ["  System Update"]="kitty --hold -e eightone-update"
-    ["  System Info"]="kitty --hold -e fastfetch"
-    ["  AUR Package"]="kitty -e holy-aur"
-    ["  Notifications"]="kitty -e holy-notify"
-    ["  Keyboard Shortcuts"]="kitty --title 'Holy Keys' -e holy-keys"
-    ["  Windows VM"]="kitty --title 'Holy Windows' -e holy-windows"
+    ["System Monitor"]="kitty -e btop"
+    ["System Update"]="kitty --hold -e eightone-update"
+    ["System Info"]="kitty --hold -e fastfetch"
+    ["AUR Package"]="kitty -e holy-aur"
+    ["Notifications"]="kitty -e holy-notify"
+    ["Keyboard Shortcuts"]="kitty --title 'Holy Keys' -e holy-keys"
+    ["Windows VM"]="kitty --title 'Holy Windows' -e holy-windows"
 
     # Power
-    ["  Lock Screen"]="hyprlock"
-    ["  Suspend"]="systemctl suspend"
-    ["  Reboot"]="systemctl reboot"
-    ["  Shutdown"]="systemctl poweroff"
-    ["  Logout"]="hyprctl dispatch exit"
+    ["Lock Screen"]="hyprlock"
+    ["Suspend"]="systemctl suspend"
+    ["Reboot"]="systemctl reboot"
+    ["Shutdown"]="systemctl poweroff"
+    ["Logout"]="hyprctl dispatch exit"
 )
 
 # Build sorted list

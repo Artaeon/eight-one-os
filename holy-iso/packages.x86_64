@@ -18,6 +18,7 @@ efibootmgr
 grub
 refind
 sudo
+polkit
 cryptsetup
 
 # ── Filesystem ──

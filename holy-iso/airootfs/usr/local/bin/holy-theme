@@ -91,9 +91,30 @@ if [ -f "$MENU_CONF" ]; then
     sudo sed -i -E "s/--selection-text-color=[0-9a-fA-F]{8}/--selection-text-color=${PRIMARY}ff/g" "$MENU_CONF"
 fi
 
+# 5. Update mako notification border
+MAKO_CONF="$HOME/.config/mako/config"
+if [ -f "$MAKO_CONF" ]; then
+    sed -i -E "s/^border-color=#[0-9a-fA-F]+$/border-color=#${PRIMARY}66/" "$MAKO_CONF"
+    sed -i -E "/^\[urgency=high\]/,/^\[/ s/^border-color=#[0-9a-fA-F]+$/border-color=#${PRIMARY}/" "$MAKO_CONF"
+fi
+
+# 6. Update hyprlock accent color
+HYPRLOCK_CONF="$HOME/.config/hypr/hyprlock.conf"
+if [ -f "$HYPRLOCK_CONF" ]; then
+    # Update input field outer color
+    sed -i -E "s/outer_color = rgba\([0-9]+, [0-9]+, [0-9]+, [0-9.]+\)/outer_color = rgba($(printf '%d, %d, %d' 0x${PRIMARY:0:2} 0x${PRIMARY:2:2} 0x${PRIMARY:4:2}), 0.8)/" "$HYPRLOCK_CONF"
+    # Update "8.1" label color
+    sed -i -E '/text = 8\.1/,/halign/ s/color = rgba\([0-9]+, [0-9]+, [0-9]+, [0-9.]+\)/color = rgba('"$(printf '%d, %d, %d' 0x${PRIMARY:0:2} 0x${PRIMARY:2:2} 0x${PRIMARY:4:2})"', 1.0)/' "$HYPRLOCK_CONF"
+    # Update verse color
+    sed -i -E '/verses\.txt/,/halign/ s/color = rgba\([0-9]+, [0-9]+, [0-9]+, [0-9.]+\)/color = rgba('"$(printf '%d, %d, %d' 0x${PRIMARY:0:2} 0x${PRIMARY:2:2} 0x${PRIMARY:4:2})"', 0.6)/' "$HYPRLOCK_CONF"
+fi
+
 # Reload Hyprland and Waybar
 hyprctl reload || true
 pkill waybar; waybar & disown
+
+# Reload mako
+makoctl reload 2>/dev/null || true
 
 # Notify User
 notify-send -u normal -t 3000 "Holy Theme Applied" "Switched to $LABEL aesthetic."

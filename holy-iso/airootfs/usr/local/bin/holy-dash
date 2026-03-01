@@ -23,9 +23,9 @@ echo -e "${RESET}${DIM}Let all things be done decently and in order.${RESET}\n"
 echo -e "${CYAN}── Insight ──${RESET}\n"
 
 # Weather
-# Only fetch if connected to internet
-if ping -c 1 8.8.8.8 >/dev/null 2>&1; then
-    WEATHER=$(curl -s "wttr.in/?format=3" 2>/dev/null || echo "Weather unavailable")
+# Only fetch if connected to internet (short timeout to avoid blocking)
+if ping -c 1 -W 2 8.8.8.8 >/dev/null 2>&1; then
+    WEATHER=$(curl -s --max-time 3 "wttr.in/?format=3" 2>/dev/null || echo "Weather unavailable")
     echo -e "${BOLD}Condition:${RESET} $WEATHER"
 else
     echo -e "${BOLD}Condition:${RESET} Offline"

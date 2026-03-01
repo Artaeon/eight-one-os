@@ -63,8 +63,9 @@ alias gp='git push'
 alias gl='git lg'
 # Welcome wizard is now triggered via Hyprland exec-once autostart
 
-# Show Fastfetch system info once setup is complete
-if [[ -f "$HOME/.welcome_done" ]]; then
+# Show Fastfetch system info once after welcome setup (first shell only)
+if [[ -f "$HOME/.welcome_done" && -z "$EIGHTONE_FASTFETCH_SHOWN" ]]; then
+    export EIGHTONE_FASTFETCH_SHOWN=1
     fastfetch
 fi
 

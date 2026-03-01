@@ -1,0 +1,12 @@
+[Unit]
+Description=Create holy user home directory from skel
+Before=greetd.service getty@tty1.service
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash -c 'if [ ! -d /home/holy ]; then mkdir -p /home/holy && cp -rT /etc/skel /home/holy && chown -R holy:holy /home/holy; fi'
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

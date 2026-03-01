@@ -103,6 +103,33 @@ tooltip {
     margin-right: 8px;
 }
 
+#custom-flow {
+    color: #e8e6df;
+    margin: 0 7px;
+}
+
+#custom-flow.working {
+    color: #ff6b6b;
+}
+
+#custom-flow.break {
+    color: #00ff88;
+}
+
+#custom-flow.idle {
+    color: #595959;
+}
+
+#custom-jot {
+    color: #d4af37;
+    margin: 0 7px;
+    padding: 0 4px;
+}
+
+#custom-jot:hover {
+    color: #00ff41; /* holy-theme-primary */
+}
+
 #custom-recording {
     color: #ff3333;
     margin: 0 5px;
