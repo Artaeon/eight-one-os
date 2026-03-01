@@ -10,15 +10,13 @@
 
 window#waybar {
     background: rgba(10, 10, 15, 0.95);
-    border-bottom: 2px solid #00ff41;
-    /* holy-theme-primary */
+    border-bottom: 2px solid #00ff41; /* holy-theme-primary */
     color: #e8e6df;
 }
 
 tooltip {
     background: rgba(10, 10, 15, 0.95);
-    border: 1px solid #00ff41;
-    /* holy-theme-primary */
+    border: 1px solid #00ff41; /* holy-theme-primary */
     border-radius: 0;
     color: #e8e6df;
 }
@@ -39,10 +37,8 @@ tooltip {
 }
 
 #workspaces button.active {
-    color: #00ff41;
-    /* holy-theme-primary */
-    border-bottom: 2px solid #00ff41;
-    /* holy-theme-primary */
+    color: #00ff41; /* holy-theme-primary */
+    border-bottom: 2px solid #00ff41; /* holy-theme-primary */
 }
 
 #workspaces button.occupied {
@@ -51,8 +47,7 @@ tooltip {
 
 #workspaces button:hover {
     background: transparent;
-    color: #00ff41;
-    /* holy-theme-primary */
+    color: #00ff41; /* holy-theme-primary */
 }
 
 /* === Window title === */
@@ -65,8 +60,7 @@ tooltip {
 /* === Clock === */
 
 #clock {
-    color: #00ff41;
-    /* holy-theme-primary */
+    color: #00ff41; /* holy-theme-primary */
     padding: 0 12px;
 }
 
@@ -84,13 +78,11 @@ tooltip {
 }
 
 #battery.charging {
-    color: #00ff41;
-    /* holy-theme-primary */
+    color: #00ff41; /* holy-theme-primary */
 }
 
 #battery.warning {
-    color: #00ff41;
-    /* holy-theme-primary */
+    color: #00ff41; /* holy-theme-primary */
 }
 
 #battery.critical {
@@ -121,8 +113,7 @@ tooltip {
 }
 
 #custom-recording {
-    color: #00ff41;
-    /* holy-theme-primary */
+    color: #00ff41; /* holy-theme-primary */
     padding: 0 8px;
 }
 

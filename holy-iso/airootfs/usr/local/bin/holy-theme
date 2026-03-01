@@ -61,23 +61,30 @@ fi
 
 echo "Applying $LABEL theme ($PRIMARY)..."
 
-# 1. Update hyprland.conf borders
+# 1. Update hyprland.conf border (single rgba value with # comment marker)
 HYPR_CONF="$HOME/.config/hypr/hyprland.conf"
 if [ -f "$HYPR_CONF" ]; then
-    sed -i -E "s/col.active_border = rgba\([0-9a-fA-F]{8}\) rgba\([0-9a-fA-F]{8}\)/col.active_border = rgba(${PRIMARY}ff) rgba(${PRIMARY}80)/g" "$HYPR_CONF"
+    sed -i -E "s/col\.active_border = rgba\([0-9a-fA-F]{8}\)(.*# holy-theme-border)/col.active_border = rgba(${PRIMARY}cc)\1/" "$HYPR_CONF"
 fi
 
-# 2. Update waybar/style.css
+# 2. Update waybar/style.css (inline comment markers)
 WAYBAR_STYLE="$HOME/.config/waybar/style.css"
 if [ -f "$WAYBAR_STYLE" ]; then
     sed -i -E "s/#[0-9a-fA-F]{6}; \/\* holy-theme-primary \*\//#${PRIMARY}; \/\* holy-theme-primary \*\//g" "$WAYBAR_STYLE"
-    sed -i -E "s/#[0-9a-fA-F]{8}; \/\* holy-theme-secondary \*\//#${SECONDARY}; \/\* holy-theme-secondary \*\//g" "$WAYBAR_STYLE"
 fi
 
-# 3. Update holy-menu (Since it's in /usr/local/bin, this requires sudo if run live, but in the skeleton/ISO context we just modify the source)
+# 3. Update fuzzel launcher config
+FUZZEL_CONF="$HOME/.config/fuzzel/fuzzel.ini"
+if [ -f "$FUZZEL_CONF" ]; then
+    sed -i -E "s/^match=[0-9a-fA-F]{6,8}$/match=${PRIMARY}ff/" "$FUZZEL_CONF"
+    sed -i -E "s/^selection=[0-9a-fA-F]{6,8}$/selection=${PRIMARY}33/" "$FUZZEL_CONF"
+    sed -i -E "s/^selection-text=[0-9a-fA-F]{6,8}$/selection-text=${PRIMARY}ff/" "$FUZZEL_CONF"
+    sed -i -E "s/^border=[0-9a-fA-F]{6,8}$/border=${PRIMARY}cc/" "$FUZZEL_CONF"
+fi
+
+# 4. Update holy-menu fuzzel overrides
 MENU_CONF="/usr/local/bin/holy-menu"
-if [ -f "/usr/local/bin/holy-menu" ]; then
-    # We use sudo here just in case the user invokes it on a live system
+if [ -f "$MENU_CONF" ]; then
     sudo sed -i -E "s/--border-color=[0-9a-fA-F]{8}/--border-color=${PRIMARY}ff/g" "$MENU_CONF"
     sudo sed -i -E "s/--match-color=[0-9a-fA-F]{8}/--match-color=${PRIMARY}ff/g" "$MENU_CONF"
     sudo sed -i -E "s/--selection-color=[0-9a-fA-F]{8}/--selection-color=${SECONDARY}/g" "$MENU_CONF"
