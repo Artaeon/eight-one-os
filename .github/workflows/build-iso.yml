@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'holy-iso/**'
+      - '.github/workflows/build-iso.yml'
   workflow_dispatch:
     inputs:
       release:
