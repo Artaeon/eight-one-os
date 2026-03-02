@@ -206,6 +206,65 @@ Provide a concise, practical answer. If it involves code, show a short example. 
     echo ""
 }
 
+# --- AI Agent Mode ---
+cmd_agent() {
+    local instruction="$*"
+
+    if [ -z "$instruction" ]; then
+        instruction=$(gum input --placeholder "What should I do?..." --width 70)
+        [ -z "$instruction" ] && exit 0
+    fi
+
+    ensure_ollama
+    local model
+    model=$(get_model)
+
+    echo -e "${CYAN}Gathering system context...${RESET}\n"
+    local context=""
+    if command -v holy-context &> /dev/null; then
+        context=$(holy-context)
+    fi
+
+    echo -e "${CYAN}🤔 Thinking...${RESET}\n"
+
+    local prompt="You are an EIGHT.ONE OS Agent. You can execute bash commands and control the system.
+If you need to execute a bash command to fulfill the request, output EXACTLY your command inside <execute> tags. You can also output text before or after the tag.
+Example:
+Got it. Executing: <execute>hyprctl dispatch workspace 2</execute>
+Do not use markdown blocks for the command, only the XML tags.
+
+$context
+
+User request: $instruction"
+
+    local response
+    response=$(echo "$prompt" | ollama run "$model" 2>/dev/null)
+
+    if [[ "$response" == *"<execute>"* ]] && [[ "$response" == *"</execute>"* ]]; then
+        local cmd
+        cmd=$(echo "$response" | sed -n 's/.*<execute>\(.*\)<\/execute>.*/\1/p' | head -n1)
+        
+        # Strip the tags for display
+        local display_text
+        display_text=$(echo "$response" | sed -e 's/<execute>[^<]*<\/execute>//g')
+        [ -n "$(echo "$display_text" | tr -d '[:space:]')" ] && echo "$display_text" | gum format
+        echo ""
+        
+        if [ -n "$cmd" ]; then
+            echo -e "${GOLD}The AI wants to run the following action:${RESET}"
+            echo -e "${BOLD}  $cmd${RESET}\n"
+            if gum confirm "Execute action?"; then
+                eval "$cmd"
+            else
+                echo -e "${RED}Action cancelled.${RESET}"
+            fi
+        fi
+    else
+        echo "$response" | gum format
+        echo ""
+    fi
+}
+
 # --- TUI Menu ---
 cmd_menu() {
     clear
@@ -215,6 +274,7 @@ cmd_menu() {
 
     CHOICE=$(gum choose \
         "💬 Chat — Open a conversation with local AI" \
+        "🚀 Agent — Command EIGHT.ONE OS using natural language" \
         "📝 Commit — Generate AI commit message from staged changes" \
         "🔍 Review — AI code review on a file" \
         "🤔 Ask — Ask a quick coding question" \
@@ -222,6 +282,7 @@ cmd_menu() {
 
     case "$CHOICE" in
         *"Chat"*)    cmd_chat ;;
+        *"Agent"*)   cmd_agent ;;
         *"Commit"*)  cmd_commit ;;
         *"Review"*)
             local file
@@ -235,9 +296,10 @@ cmd_menu() {
 # --- Main ---
 case "${1:-menu}" in
     chat)    cmd_chat ;;
+    agent)   shift; cmd_agent "$@" ;;
     commit)  cmd_commit ;;
     review)  shift; cmd_review "$@" ;;
     ask)     shift; cmd_ask "$@" ;;
     menu)    cmd_menu ;;
-    *)       echo "Usage: holy-ai [chat|commit|review <file>|ask <question>]" ;;
+    *)       echo "Usage: holy-ai [chat|agent|commit|review <file>|ask <question>]" ;;
 esac
