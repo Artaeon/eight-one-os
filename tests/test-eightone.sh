@@ -285,7 +285,7 @@ required_tools=(
     "flatpak"
     "rclone"
     "hyprsunset"
-    "swayosd-git"
+    "swayosd"
 )
 
 if [ -f "$pkg_file" ]; then
