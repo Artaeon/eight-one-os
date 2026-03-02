@@ -209,6 +209,29 @@ do_appearance() {
     gum input --placeholder "Press Enter to continue..."
 }
 
+# ─── Cloud & Backup ───
+do_cloud() {
+    show_header
+    echo -e "${GOLD}⟐ Cloud & Backup${RESET}\n"
+
+    CHOICE=$(gum choose \
+        "☁️  Nextcloud Sync" \
+        "📸 Create Backup" \
+        "📋 List Backups" \
+        "♻️  Restore from Backup" \
+        "⏱️  Time Tracker" \
+        "← Back")
+
+    case "$CHOICE" in
+        *"Nextcloud"*) holy-sync ;;
+        *"Create"*)    holy-backup now ;;
+        *"List"*)      holy-backup list ;;
+        *"Restore"*)   holy-backup restore ;;
+        *"Time"*)      holy-timetrack ;;
+    esac
+    gum input --placeholder "Press Enter to continue..."
+}
+
 # ─── Tools Launcher ───
 do_tools() {
     show_header
@@ -313,6 +336,7 @@ while true; do
         "📶  Network & Connectivity" \
         "⌨️   Keyboard & Language" \
         "🎨  Appearance" \
+        "☁️   Cloud & Backup" \
         "🛠️   Developer Tools" \
         "⚙️   System" \
         "ℹ️   About" \
@@ -325,6 +349,7 @@ while true; do
         *"Network"*)    do_network ;;
         *"Keyboard"*)   do_keyboard ;;
         *"Appearance"*) do_appearance ;;
+        *"Cloud"*)      do_cloud ;;
         *"Developer"*)  do_tools ;;
         *"System"*)     do_system ;;
         *"About"*)      do_about ;;

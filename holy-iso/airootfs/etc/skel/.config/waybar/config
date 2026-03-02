@@ -12,7 +12,10 @@
     ],
     "modules-right": [
         "custom/flow",
+        "custom/timetrack",
         "custom/jot",
+        "custom/sync",
+        "custom/nightlight",
         "custom/recording",
         "cpu",
         "memory",
@@ -115,6 +118,24 @@
         "format": " Jot",
         "tooltip": "Quick note (Super+Y)",
         "on-click": "kitty --title 'Holy Jot' -e holy-jot"
+    },
+    "custom/sync": {
+        "exec": "holy-sync waybar",
+        "return-type": "json",
+        "interval": 60,
+        "on-click": "kitty --title 'Holy Sync' -e holy-sync"
+    },
+    "custom/timetrack": {
+        "exec": "holy-timetrack waybar",
+        "return-type": "json",
+        "interval": 30,
+        "on-click": "kitty --title 'Holy Timetrack' -e holy-timetrack"
+    },
+    "custom/nightlight": {
+        "exec": "holy-nightlight waybar",
+        "return-type": "json",
+        "interval": 10,
+        "on-click": "holy-nightlight toggle"
     },
     "tray": {
         "icon-size": 14,

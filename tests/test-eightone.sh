@@ -283,6 +283,9 @@ required_tools=(
     "plymouth"
     "obsidian"
     "flatpak"
+    "rclone"
+    "hyprsunset"
+    "swayosd-git"
 )
 
 if [ -f "$pkg_file" ]; then

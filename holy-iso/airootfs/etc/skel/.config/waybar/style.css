@@ -140,6 +140,33 @@ tooltip {
     animation: blink 1s infinite;
 }
 
+#custom-sync {
+    color: #595959;
+    margin: 0 7px;
+}
+
+#custom-sync.synced {
+    color: #00ff41;
+}
+
+#custom-timetrack {
+    color: #595959;
+    margin: 0 7px;
+}
+
+#custom-timetrack.tracking {
+    color: #ff6b6b;
+}
+
+#custom-nightlight {
+    color: #595959;
+    margin: 0 7px;
+}
+
+#custom-nightlight.active {
+    color: #d4af37;
+}
+
 @keyframes blink {
     50% {
         opacity: 0.4;

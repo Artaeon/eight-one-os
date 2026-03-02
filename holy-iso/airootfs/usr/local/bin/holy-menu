@@ -48,6 +48,12 @@ declare -A COMMANDS=(
     ["AI Assistant"]="kitty --title 'Holy AI' -e holy-ai"
     ["Bible"]="kitty -e holy-bible"
 
+    # Cloud & Productivity
+    ["Sync"]="kitty --title 'Holy Sync' -e holy-sync"
+    ["Backup"]="kitty --title 'Holy Backup' -e holy-backup"
+    ["Time Tracker"]="kitty --title 'Holy Timetrack' -e holy-timetrack"
+    ["Night Light"]="holy-nightlight toggle"
+
     # Tools
     ["Dictation"]="holy-dictate toggle"
     ["Record Screen"]="holy-record toggle"

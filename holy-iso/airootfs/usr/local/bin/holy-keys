@@ -46,6 +46,7 @@ echo -e "${CYAN}${BOLD}  ── Extra Tools ──${RESET}"
 echo -e "  ${WHITE}Super + Shift+P${RESET}        Quick Project Opener"
 echo -e "  ${WHITE}Super + Shift+V${RESET}        Voice Dictation Toggle"
 echo -e "  ${WHITE}Super + Shift+X${RESET}        Windows VM (holy-windows)"
+echo -e "  ${WHITE}Super + Shift+N${RESET}        Toggle Night Light"
 echo ""
 
 echo -e "${CYAN}${BOLD}  ── Utilities ──${RESET}"
