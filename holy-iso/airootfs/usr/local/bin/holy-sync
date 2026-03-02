@@ -1,0 +1,215 @@
+#!/usr/bin/env bash
+# EIGHT.ONE OS — Holy Sync
+# Nextcloud / WebDAV sync via rclone
+# Usage: holy-sync [setup|now|status|enable|disable|waybar]
+
+set -uo pipefail
+
+GOLD="\e[33m"
+CYAN="\e[36m"
+GREEN="\e[32m"
+RED="\e[31m"
+DIM="\e[2m"
+BOLD="\e[1m"
+RESET="\e[0m"
+
+REMOTE_NAME="nextcloud"
+SYNC_LOG="$HOME/.local/share/holy-sync/last-sync.log"
+SYNC_DIRS=("$HOME/Documents" "$HOME/Notes" "$HOME/.config")
+mkdir -p "$HOME/.local/share/holy-sync"
+
+# ── Setup ──
+
+do_setup() {
+    clear
+    echo -e "${GOLD}${BOLD}"
+    figlet -f small "Holy Sync" 2>/dev/null || echo "═══ HOLY SYNC SETUP ═══"
+    echo -e "${RESET}"
+
+    echo -e "${CYAN}Configure Nextcloud / WebDAV sync via rclone.${RESET}\n"
+
+    SERVER=$(gum input --placeholder "Nextcloud URL (e.g. https://cloud.example.com)")
+    [ -z "$SERVER" ] && { echo -e "${RED}Aborted.${RESET}"; return 1; }
+
+    USER=$(gum input --placeholder "Username")
+    [ -z "$USER" ] && { echo -e "${RED}Aborted.${RESET}"; return 1; }
+
+    PASS=$(gum input --password --placeholder "Password (or App Password)")
+    [ -z "$PASS" ] && { echo -e "${RED}Aborted.${RESET}"; return 1; }
+
+    # Strip trailing slash
+    SERVER="${SERVER%/}"
+
+    echo -e "\n${CYAN}Configuring rclone remote '${REMOTE_NAME}'...${RESET}"
+
+    # Remove existing remote if present
+    rclone config delete "$REMOTE_NAME" 2>/dev/null
+
+    rclone config create "$REMOTE_NAME" webdav \
+        url "${SERVER}/remote.php/dav/files/${USER}" \
+        vendor nextcloud \
+        user "$USER" \
+        pass "$(rclone obscure "$PASS")" \
+        --quiet
+
+    # Test connection
+    echo -e "${CYAN}Testing connection...${RESET}"
+    if rclone lsd "${REMOTE_NAME}:/" --max-depth 1 &>/dev/null; then
+        echo -e "${GREEN}${BOLD}Connected to Nextcloud!${RESET}"
+        echo -e "${DIM}Remote folders:${RESET}"
+        rclone lsd "${REMOTE_NAME}:/" --max-depth 1 2>/dev/null | head -10
+    else
+        echo -e "${RED}Connection failed. Check credentials and URL.${RESET}"
+        rclone config delete "$REMOTE_NAME" 2>/dev/null
+        return 1
+    fi
+
+    echo ""
+    gum input --placeholder "Press Enter to continue..."
+}
+
+# ── Sync Now ──
+
+do_sync() {
+    echo -e "${CYAN}Starting sync...${RESET}"
+    local errors=0
+
+    for dir in "${SYNC_DIRS[@]}"; do
+        [ -d "$dir" ] || continue
+        local name
+        name=$(basename "$dir")
+        echo -e "${DIM}Syncing $name...${RESET}"
+        if rclone bisync "$dir" "${REMOTE_NAME}:/${name}" \
+            --create-empty-src-dirs \
+            --resync-mode newer \
+            --conflict-resolve newer \
+            2>>"$SYNC_LOG"; then
+            echo -e "  ${GREEN}$name synced${RESET}"
+        else
+            # First run needs --resync
+            if rclone bisync "$dir" "${REMOTE_NAME}:/${name}" \
+                --create-empty-src-dirs --resync \
+                2>>"$SYNC_LOG"; then
+                echo -e "  ${GREEN}$name synced (initial)${RESET}"
+            else
+                echo -e "  ${RED}$name failed${RESET}"
+                ((errors++))
+            fi
+        fi
+    done
+
+    date '+%Y-%m-%d %H:%M:%S' > "$HOME/.local/share/holy-sync/last-run"
+
+    if [ "$errors" -eq 0 ]; then
+        echo -e "\n${GREEN}${BOLD}Sync complete.${RESET}"
+    else
+        echo -e "\n${RED}${BOLD}Sync finished with $errors errors.${RESET}"
+    fi
+}
+
+# ── Status ──
+
+do_status() {
+    if ! rclone listremotes 2>/dev/null | grep -q "^${REMOTE_NAME}:"; then
+        echo -e "${DIM}Not configured. Run: holy-sync setup${RESET}"
+        return
+    fi
+
+    echo -e "${GREEN}Remote: ${REMOTE_NAME} (configured)${RESET}"
+
+    if [ -f "$HOME/.local/share/holy-sync/last-run" ]; then
+        echo -e "Last sync: $(cat "$HOME/.local/share/holy-sync/last-run")"
+    else
+        echo -e "Last sync: never"
+    fi
+
+    if systemctl --user is-active holy-sync.timer &>/dev/null; then
+        echo -e "Auto-sync: ${GREEN}enabled${RESET}"
+    else
+        echo -e "Auto-sync: ${DIM}disabled${RESET}"
+    fi
+}
+
+# ── Timer Control ──
+
+do_enable() {
+    systemctl --user enable --now holy-sync.timer 2>/dev/null
+    echo -e "${GREEN}Auto-sync enabled (every 10 minutes).${RESET}"
+}
+
+do_disable() {
+    systemctl --user disable --now holy-sync.timer 2>/dev/null
+    echo -e "${GOLD}Auto-sync disabled.${RESET}"
+}
+
+# ── Waybar Output ──
+
+do_waybar() {
+    if ! rclone listremotes 2>/dev/null | grep -q "^${REMOTE_NAME}:"; then
+        echo '{}'
+        return
+    fi
+
+    local last="never"
+    local class="idle"
+    if [ -f "$HOME/.local/share/holy-sync/last-run" ]; then
+        last=$(cat "$HOME/.local/share/holy-sync/last-run")
+        class="synced"
+    fi
+
+    printf '{"text": " sync", "tooltip": "Last: %s", "class": "%s"}\n' "$last" "$class"
+}
+
+# ── TUI ──
+
+show_tui() {
+    clear
+    echo -e "${GOLD}${BOLD}"
+    figlet -f small "Holy Sync" 2>/dev/null || echo "═══ HOLY SYNC ═══"
+    echo -e "${RESET}${DIM}Nextcloud sync via rclone${RESET}\n"
+
+    do_status
+    echo ""
+
+    local configured=false
+    rclone listremotes 2>/dev/null | grep -q "^${REMOTE_NAME}:" && configured=true
+
+    if [ "$configured" = true ]; then
+        CHOICE=$(gum choose \
+            "🔄 Sync Now" \
+            "📊 Status" \
+            "⏱️  Enable Auto-Sync" \
+            "⏹️  Disable Auto-Sync" \
+            "🔧 Re-configure" \
+            "← Back")
+    else
+        CHOICE=$(gum choose \
+            "🔧 Setup Nextcloud" \
+            "← Back")
+    fi
+
+    case "$CHOICE" in
+        *"Sync Now"*)     do_sync ;;
+        *"Status"*)       do_status ;;
+        *"Enable"*)       do_enable ;;
+        *"Disable"*)      do_disable ;;
+        *"Re-configure"*) do_setup ;;
+        *"Setup"*)        do_setup ;;
+        *) return ;;
+    esac
+
+    echo ""
+    gum input --placeholder "Press Enter to continue..."
+}
+
+# ── Main ──
+
+case "${1:-}" in
+    setup)   do_setup ;;
+    now)     do_sync ;;
+    status)  do_status ;;
+    enable)  do_enable ;;
+    disable) do_disable ;;
+    waybar)  do_waybar ;;
+    *)       show_tui ;;
+esac

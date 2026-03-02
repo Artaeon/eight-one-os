@@ -109,6 +109,7 @@ yazi
 khal
 vdirsyncer
 libnotify
+rclone
 
 # ── Networking ──
 networkmanager

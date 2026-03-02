@@ -1,0 +1,6 @@
+[Unit]
+Description=Holy Sync — Nextcloud sync via rclone
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/holy-sync now
