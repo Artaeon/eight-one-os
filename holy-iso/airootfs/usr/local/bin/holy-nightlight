@@ -1,0 +1,109 @@
+#!/usr/bin/env bash
+# EIGHT.ONE OS — Holy Night Light
+# Blue light filter via hyprsunset
+# Usage: holy-nightlight [on|off|toggle|waybar]
+
+set -uo pipefail
+
+GOLD="\e[33m"
+CYAN="\e[36m"
+GREEN="\e[32m"
+RED="\e[31m"
+DIM="\e[2m"
+BOLD="\e[1m"
+RESET="\e[0m"
+
+DEFAULT_TEMP=4000
+
+is_active() {
+    pgrep -x hyprsunset &>/dev/null
+}
+
+do_on() {
+    local temp="${1:-$DEFAULT_TEMP}"
+    if is_active; then
+        echo -e "${DIM}Night light already active.${RESET}"
+        return
+    fi
+    hyprsunset -t "$temp" &
+    disown
+    echo -e "${GREEN}Night light ON (${temp}K)${RESET}"
+}
+
+do_off() {
+    if ! is_active; then
+        echo -e "${DIM}Night light already off.${RESET}"
+        return
+    fi
+    pkill -x hyprsunset 2>/dev/null
+    echo -e "${GOLD}Night light OFF${RESET}"
+}
+
+do_toggle() {
+    if is_active; then
+        do_off
+    else
+        do_on "${1:-$DEFAULT_TEMP}"
+    fi
+}
+
+do_waybar() {
+    if is_active; then
+        printf '{"text": " night", "tooltip": "Night light active", "class": "active"}\n'
+    else
+        echo '{}'
+    fi
+}
+
+# ── TUI ──
+
+show_tui() {
+    clear
+    echo -e "${GOLD}${BOLD}"
+    figlet -f small "Night Light" 2>/dev/null || echo "═══ NIGHT LIGHT ═══"
+    echo -e "${RESET}${DIM}Blue light filter via hyprsunset${RESET}\n"
+
+    if is_active; then
+        echo -e "Status: ${GREEN}ACTIVE${RESET}\n"
+        CHOICE=$(gum choose \
+            "🌙 Turn Off" \
+            "🔆 Change Temperature" \
+            "← Back")
+    else
+        echo -e "Status: ${DIM}OFF${RESET}\n"
+        CHOICE=$(gum choose \
+            "🌙 Turn On (4000K — warm)" \
+            "🔶 Turn On (3500K — warmer)" \
+            "🔴 Turn On (3000K — warmest)" \
+            "← Back")
+    fi
+
+    case "$CHOICE" in
+        *"Turn Off"*)
+            do_off ;;
+        *"Change"*)
+            TEMP=$(gum choose "4500K" "4000K" "3500K" "3000K" "2700K")
+            TEMP="${TEMP%K}"
+            pkill -x hyprsunset 2>/dev/null
+            sleep 0.2
+            do_on "$TEMP"
+            ;;
+        *"4000K"*)  do_on 4000 ;;
+        *"3500K"*)  do_on 3500 ;;
+        *"3000K"*)  do_on 3000 ;;
+        *) return ;;
+    esac
+
+    echo ""
+    gum input --placeholder "Press Enter to continue..."
+}
+
+# ── Main ──
+
+case "${1:-}" in
+    on)     do_on "${2:-$DEFAULT_TEMP}" ;;
+    off)    do_off ;;
+    toggle) do_toggle "${2:-$DEFAULT_TEMP}" ;;
+    waybar) do_waybar ;;
+    *)      show_tui ;;
+esac

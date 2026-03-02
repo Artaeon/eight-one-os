@@ -58,6 +58,7 @@ file_permissions=(
   ["/usr/local/bin/holy-sync"]="0:0:755"
   ["/usr/local/bin/holy-backup"]="0:0:755"
   ["/usr/local/bin/holy-timetrack"]="0:0:755"
+  ["/usr/local/bin/holy-nightlight"]="0:0:755"
   ["/usr/local/bin/holy-jot"]="0:0:755"
   ["/usr/local/bin/holy-planner"]="0:0:755"
   ["/etc/sudoers.d/holy-live"]="0:0:440"
