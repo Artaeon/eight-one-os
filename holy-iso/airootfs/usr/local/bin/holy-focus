@@ -24,6 +24,8 @@ DISTRACTIONS=(
 )
 
 BUILDER_STATE="$HOME/.local/share/holy-flow/builder_mode"
+TIMER_PID_FILE="$HOME/.local/share/holy-flow/focus_timer_pid"
+TIMER_END_FILE="$HOME/.local/share/holy-flow/focus_end_time"
 mkdir -p "$HOME/.local/share/holy-flow"
 
 is_focus_active() {
@@ -32,6 +34,24 @@ is_focus_active() {
 
 is_builder_mode() {
     [ -f "$BUILDER_STATE" ] && [ "$(cat "$BUILDER_STATE")" = "active" ]
+}
+
+is_timed_focus() {
+    [ -f "$TIMER_PID_FILE" ] && kill -0 "$(cat "$TIMER_PID_FILE")" 2>/dev/null
+}
+
+get_remaining_time() {
+    if [ -f "$TIMER_END_FILE" ]; then
+        local end_ts now remaining
+        end_ts=$(cat "$TIMER_END_FILE")
+        now=$(date '+%s')
+        remaining=$(( end_ts - now ))
+        if [ "$remaining" -gt 0 ]; then
+            echo "$(( remaining / 60 ))m remaining"
+        else
+            echo "ending..."
+        fi
+    fi
 }
 
 activate_focus() {
@@ -87,6 +107,39 @@ deactivate_builder_mode() {
     holy-flow stop 2>/dev/null
 }
 
+activate_timed_focus() {
+    local minutes="${1:-}"
+    if [ -z "$minutes" ]; then
+        minutes=$(gum choose --header "Focus duration:" \
+            "25" "45" "60" "90" "120")
+    fi
+    [ -z "$minutes" ] && return
+
+    if ! is_focus_active; then
+        activate_focus
+    fi
+
+    local end_ts
+    end_ts=$(( $(date '+%s') + minutes * 60 ))
+    echo "$end_ts" > "$TIMER_END_FILE"
+
+    # Background auto-deactivate
+    (
+        sleep $(( minutes * 60 ))
+        # Only deactivate if we're still the active timer
+        if [ -f "$TIMER_END_FILE" ] && [ "$(cat "$TIMER_END_FILE")" = "$end_ts" ]; then
+            holy-focus deactivate
+            rm -f "$TIMER_PID_FILE" "$TIMER_END_FILE"
+            notify-send "Holy Focus" "Timed focus block complete (${minutes}m)" 2>/dev/null
+        fi
+    ) &
+    echo $! > "$TIMER_PID_FILE"
+    disown
+
+    echo -e "${GOLD}${BOLD}Timed focus: ${minutes} minutes${RESET}"
+    echo -e "${DIM}Auto-deactivates at $(date -d "+${minutes} minutes" '+%H:%M')${RESET}"
+}
+
 # --- TUI ---
 
 show_tui() {
@@ -98,6 +151,8 @@ show_tui() {
     # Show status
     if is_builder_mode; then
         echo -e "Status: ${RED}${BOLD}⚡ BUILDER MODE${RESET} (hardcore)\n"
+    elif is_focus_active && is_timed_focus; then
+        echo -e "Status: ${GOLD}🛡️ TIMED FOCUS${RESET} ($(get_remaining_time))\n"
     elif is_focus_active; then
         echo -e "Status: ${GOLD}🛡️ FOCUS ACTIVE${RESET} (sites blocked, notifications muted)\n"
     else
@@ -137,6 +192,7 @@ show_tui() {
     else
         CHOICE=$(gum choose \
             "🛡️ Activate Focus (Block Sites + Mute)" \
+            "⏱️ Timed Focus (auto-deactivate)" \
             "⚡ Activate Builder Mode (Nuclear Option)" \
             "🔕 Mute Notifications Only" \
             "← Back")
@@ -145,6 +201,9 @@ show_tui() {
                 activate_focus
                 echo -e "\n${GOLD}✓ Focus Mode activated.${RESET}"
                 echo -e "Run ${CYAN}holy-focus${RESET} again to deactivate."
+                ;;
+            *"Timed"*)
+                activate_timed_focus
                 ;;
             *"Builder"*)
                 activate_builder_mode
@@ -167,6 +226,7 @@ case "${1:-}" in
     activate) activate_focus ;;
     deactivate) deactivate_focus ;;
     builder) activate_builder_mode ;;
+    timed) activate_timed_focus "${2:-}" ;;
     status)
         if is_builder_mode; then echo "builder"
         elif is_focus_active; then echo "focus"
