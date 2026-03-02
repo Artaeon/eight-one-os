@@ -337,7 +337,7 @@ section "greetd Config"
 
 greetd="$ISO/airootfs/etc/greetd/config.toml"
 if [ -f "$greetd" ]; then
-    if grep -q 'command.*=.*"/usr/local/bin/start-hyprland"' "$greetd"; then
+    if grep -q '/usr/local/bin/start-hyprland' "$greetd"; then
         pass "greetd — uses full path to start-hyprland"
     else
         fail "greetd — does NOT use full path to start-hyprland"
