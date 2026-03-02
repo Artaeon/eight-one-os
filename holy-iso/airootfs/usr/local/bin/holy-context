@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+# EIGHT.ONE OS — Holy Context Gatherer
+# Gathers local OS context for the AI agent on demand.
+
+echo "--- SYSTEM CONTEXT ---"
+echo "Current Time: $(date)"
+echo ""
+
+# Active Window
+if command -v hyprctl &> /dev/null; then
+    active_window=$(hyprctl activewindow -j 2>/dev/null)
+    if [ -n "$active_window" ] && [ "$active_window" != "{}" ]; then
+        class=$(echo "$active_window" | jq -r '.class')
+        title=$(echo "$active_window" | jq -r '.title')
+        echo "Active Window: [$class] $title"
+    else
+        echo "Active Window: None"
+    fi
+else
+    echo "Active Window: Unknown (Hyprland not running)"
+fi
+echo ""
+
+# Clipboard Content (only if text)
+if command -v wl-paste &> /dev/null; then
+    # check if clipboard has text
+    clip_type=$(wl-paste -t | head -n1 2>/dev/null)
+    if [[ "$clip_type" == *"text"* ]] || [[ "$clip_type" == "UTF8_STRING" ]] || [[ "$clip_type" == "STRING" ]]; then
+        clip=$(wl-paste -n | head -c 1000 2>/dev/null)
+        if [ -n "$clip" ]; then
+            echo "Recent Clipboard Content:"
+            echo "$clip"
+            echo ""
+        fi
+    fi
+fi
+
+# Recent Errors
+if command -v journalctl &> /dev/null; then
+    errors=$(journalctl -p 3 -n 5 --no-pager 2>/dev/null)
+    if [ -n "$errors" ] && [ "$errors" != "-- No entries --" ]; then
+        echo "Recent System Errors:"
+        echo "$errors"
+        echo ""
+    fi
+fi
+
+# Load Average
+if command -v uptime &> /dev/null; then
+    load=$(uptime | awk -F'load average:' '{ print $2 }' | xargs)
+    echo "System Load Average: $load"
+fi
+
+echo "--- END CONTEXT ---"
