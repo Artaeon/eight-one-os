@@ -1,0 +1,177 @@
+#!/usr/bin/env bash
+# EIGHT.ONE OS — Holy Backup
+# BTRFS snapshots + optional Nextcloud push
+# Usage: holy-backup [now|list|restore]
+
+set -uo pipefail
+
+GOLD="\e[33m"
+CYAN="\e[36m"
+GREEN="\e[32m"
+RED="\e[31m"
+DIM="\e[2m"
+BOLD="\e[1m"
+RESET="\e[0m"
+
+SNAP_DIR="/.snapshots"
+SNAP_META="$HOME/.local/share/holy-backup"
+mkdir -p "$SNAP_META"
+
+is_btrfs() {
+    findmnt -n -o FSTYPE / 2>/dev/null | grep -q btrfs
+}
+
+# ── Create Snapshot ──
+
+do_snapshot() {
+    if ! is_btrfs; then
+        echo -e "${RED}Root filesystem is not BTRFS. Snapshots unavailable.${RESET}"
+        echo -e "${DIM}Falling back to rsync-based backup...${RESET}\n"
+        do_rsync_backup
+        return
+    fi
+
+    local label="${1:-manual}"
+    local timestamp
+    timestamp=$(date '+%Y-%m-%d_%H%M%S')
+    local snap_name="${timestamp}_${label}"
+
+    echo -e "${CYAN}Creating BTRFS snapshot: ${snap_name}...${RESET}"
+
+    if sudo snapper create --description "$snap_name" 2>/dev/null; then
+        echo -e "${GREEN}${BOLD}Snapshot created: ${snap_name}${RESET}"
+    elif sudo btrfs subvolume snapshot / "${SNAP_DIR}/${snap_name}" 2>/dev/null; then
+        echo -e "${GREEN}${BOLD}Snapshot created: ${SNAP_DIR}/${snap_name}${RESET}"
+    else
+        echo -e "${RED}Failed to create snapshot.${RESET}"
+        return 1
+    fi
+
+    echo "$snap_name" >> "$SNAP_META/history"
+    date '+%Y-%m-%d %H:%M:%S' > "$SNAP_META/last-backup"
+
+    # Push metadata to Nextcloud if configured
+    if rclone listremotes 2>/dev/null | grep -q "^nextcloud:"; then
+        echo -e "${DIM}Pushing backup record to Nextcloud...${RESET}"
+        rclone copy "$SNAP_META/history" "nextcloud:/Backups/" 2>/dev/null && \
+            echo -e "${GREEN}Backup record synced.${RESET}" || \
+            echo -e "${DIM}Cloud push skipped (offline).${RESET}"
+    fi
+}
+
+do_rsync_backup() {
+    local dest
+    dest=$(gum input --placeholder "Backup destination (e.g. /mnt/backup, /run/media/$USER/usb)")
+    [ -z "$dest" ] && { echo -e "${RED}Aborted.${RESET}"; return 1; }
+
+    if [ ! -d "$dest" ]; then
+        echo -e "${RED}Destination does not exist: $dest${RESET}"
+        return 1
+    fi
+
+    local timestamp
+    timestamp=$(date '+%Y-%m-%d_%H%M%S')
+    local target="${dest}/eightone-backup-${timestamp}"
+
+    echo -e "${CYAN}Backing up home directory to ${target}...${RESET}"
+    rsync -ah --progress --exclude='.cache' --exclude='.local/share/Trash' \
+        "$HOME/" "$target/" 2>&1 | tail -3
+
+    echo "$target" >> "$SNAP_META/history"
+    date '+%Y-%m-%d %H:%M:%S' > "$SNAP_META/last-backup"
+    echo -e "${GREEN}${BOLD}Backup complete: ${target}${RESET}"
+}
+
+# ── List Snapshots ──
+
+do_list() {
+    echo -e "${GOLD}${BOLD}Snapshots & Backups${RESET}\n"
+
+    if is_btrfs && command -v snapper &>/dev/null; then
+        echo -e "${CYAN}BTRFS Snapshots (snapper):${RESET}"
+        sudo snapper list 2>/dev/null || echo -e "${DIM}No snapper snapshots.${RESET}"
+        echo ""
+    fi
+
+    if [ -f "$SNAP_META/history" ]; then
+        echo -e "${CYAN}Holy Backup History:${RESET}"
+        tail -20 "$SNAP_META/history"
+    else
+        echo -e "${DIM}No backup history yet.${RESET}"
+    fi
+}
+
+# ── Restore ──
+
+do_restore() {
+    if ! is_btrfs; then
+        echo -e "${RED}BTRFS restore only works on BTRFS filesystems.${RESET}"
+        echo -e "${DIM}For rsync backups, manually copy files from the backup directory.${RESET}"
+        return 1
+    fi
+
+    echo -e "${RED}${BOLD}⚠ RESTORE FROM SNAPSHOT${RESET}\n"
+    echo -e "${DIM}This will list available snapshots for rollback.${RESET}\n"
+
+    if command -v snapper &>/dev/null; then
+        sudo snapper list 2>/dev/null
+        echo ""
+        SNAP_ID=$(gum input --placeholder "Enter snapshot number to restore...")
+        [ -z "$SNAP_ID" ] && { echo -e "${RED}Aborted.${RESET}"; return 1; }
+
+        if gum confirm "Restore snapshot #${SNAP_ID}? This will undo changes since that snapshot."; then
+            echo -e "${CYAN}Rolling back to snapshot #${SNAP_ID}...${RESET}"
+            sudo snapper undochange "$SNAP_ID"..0
+            echo -e "${GREEN}${BOLD}Rollback complete. Reboot recommended.${RESET}"
+        fi
+    else
+        echo -e "${RED}snapper not configured. Manual BTRFS rollback required.${RESET}"
+    fi
+}
+
+# ── TUI ──
+
+show_tui() {
+    clear
+    echo -e "${GOLD}${BOLD}"
+    figlet -f small "Holy Backup" 2>/dev/null || echo "═══ HOLY BACKUP ═══"
+    echo -e "${RESET}${DIM}BTRFS snapshots & backup management${RESET}\n"
+
+    if [ -f "$SNAP_META/last-backup" ]; then
+        echo -e "Last backup: $(cat "$SNAP_META/last-backup")"
+    else
+        echo -e "Last backup: ${DIM}never${RESET}"
+    fi
+
+    if is_btrfs; then
+        echo -e "Filesystem: ${GREEN}BTRFS (snapshots available)${RESET}"
+    else
+        echo -e "Filesystem: ${DIM}non-BTRFS (rsync mode)${RESET}"
+    fi
+    echo ""
+
+    CHOICE=$(gum choose \
+        "📸 Create Backup Now" \
+        "📋 List Backups" \
+        "♻️  Restore from Snapshot" \
+        "← Back")
+
+    case "$CHOICE" in
+        *"Create"*)  do_snapshot ;;
+        *"List"*)    do_list ;;
+        *"Restore"*) do_restore ;;
+        *) return ;;
+    esac
+
+    echo ""
+    gum input --placeholder "Press Enter to continue..."
+}
+
+# ── Main ──
+
+case "${1:-}" in
+    now)     do_snapshot "${2:-manual}" ;;
+    list)    do_list ;;
+    restore) do_restore ;;
+    *)       show_tui ;;
+esac
