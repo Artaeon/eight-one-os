@@ -1,0 +1,244 @@
+#!/usr/bin/env bash
+# EIGHT.ONE OS — Holy Timetrack
+# Simple work hour logger
+# Usage: holy-timetrack [start|stop|status|report|waybar]
+
+set -uo pipefail
+
+GOLD="\e[33m"
+CYAN="\e[36m"
+GREEN="\e[32m"
+RED="\e[31m"
+DIM="\e[2m"
+BOLD="\e[1m"
+RESET="\e[0m"
+
+DATA_DIR="$HOME/.local/share/holy-timetrack"
+CURRENT="$DATA_DIR/current"
+LOG="$DATA_DIR/log.csv"
+mkdir -p "$DATA_DIR"
+
+# Initialize log with header if needed
+[ -f "$LOG" ] || echo "date,project,start,end,duration_min" > "$LOG"
+
+is_tracking() {
+    [ -f "$CURRENT" ]
+}
+
+# ── Start Tracking ──
+
+do_start() {
+    if is_tracking; then
+        echo -e "${RED}Already tracking. Stop current session first.${RESET}"
+        do_status
+        return 1
+    fi
+
+    local project="${1:-}"
+    if [ -z "$project" ]; then
+        # Get recent projects for quick selection
+        local recent
+        recent=$(tail -20 "$LOG" 2>/dev/null | awk -F',' 'NR>1{print $2}' | sort -u | tail -5)
+        if [ -n "$recent" ]; then
+            project=$(echo -e "${recent}\n(new project)" | gum choose --header "Select project:")
+        fi
+        if [ -z "$project" ] || [ "$project" = "(new project)" ]; then
+            project=$(gum input --placeholder "Project name...")
+        fi
+    fi
+
+    [ -z "$project" ] && { echo -e "${RED}No project specified.${RESET}"; return 1; }
+
+    local now
+    now=$(date '+%s')
+    echo "${project}|${now}" > "$CURRENT"
+
+    echo -e "${GREEN}${BOLD}Tracking started: ${project}${RESET}"
+    echo -e "${DIM}$(date '+%H:%M')${RESET}"
+}
+
+# ── Stop Tracking ──
+
+do_stop() {
+    if ! is_tracking; then
+        echo -e "${DIM}Not currently tracking.${RESET}"
+        return 1
+    fi
+
+    local data
+    data=$(cat "$CURRENT")
+    local project="${data%%|*}"
+    local start_ts="${data##*|}"
+    local end_ts
+    end_ts=$(date '+%s')
+    local duration_min=$(( (end_ts - start_ts) / 60 ))
+    local start_time end_time today
+    start_time=$(date -d "@$start_ts" '+%H:%M')
+    end_time=$(date '+%H:%M')
+    today=$(date '+%Y-%m-%d')
+
+    echo "${today},${project},${start_time},${end_time},${duration_min}" >> "$LOG"
+    rm -f "$CURRENT"
+
+    echo -e "${GREEN}${BOLD}Session logged: ${project}${RESET}"
+    echo -e "${DIM}${start_time} — ${end_time} (${duration_min} min)${RESET}"
+}
+
+# ── Status ──
+
+do_status() {
+    if is_tracking; then
+        local data
+        data=$(cat "$CURRENT")
+        local project="${data%%|*}"
+        local start_ts="${data##*|}"
+        local now
+        now=$(date '+%s')
+        local elapsed=$(( (now - start_ts) / 60 ))
+        local start_time
+        start_time=$(date -d "@$start_ts" '+%H:%M')
+
+        echo -e "${GREEN}${BOLD}Tracking: ${project}${RESET}"
+        echo -e "Started: ${start_time} (${elapsed} min ago)"
+    else
+        echo -e "${DIM}Not tracking.${RESET}"
+    fi
+}
+
+# ── Report ──
+
+do_report() {
+    echo -e "${GOLD}${BOLD}Time Report${RESET}\n"
+
+    if [ ! -f "$LOG" ] || [ "$(wc -l < "$LOG")" -le 1 ]; then
+        echo -e "${DIM}No sessions logged yet.${RESET}"
+        return
+    fi
+
+    local period="${1:-week}"
+    local since
+    case "$period" in
+        today) since=$(date '+%Y-%m-%d') ;;
+        week)  since=$(date -d 'last monday' '+%Y-%m-%d' 2>/dev/null || date -d '7 days ago' '+%Y-%m-%d') ;;
+        month) since=$(date '+%Y-%m-01') ;;
+        all)   since="1970-01-01" ;;
+        *)     since=$(date -d '7 days ago' '+%Y-%m-%d') ;;
+    esac
+
+    echo -e "${CYAN}Period: ${period} (since ${since})${RESET}\n"
+
+    # Per-project totals
+    echo -e "${BOLD}Project Totals:${RESET}"
+    awk -F',' -v since="$since" '
+        NR > 1 && $1 >= since {
+            total[$2] += $5
+            grand += $5
+        }
+        END {
+            for (p in total) {
+                h = int(total[p] / 60)
+                m = total[p] % 60
+                printf "  %-20s %dh %02dm\n", p, h, m
+            }
+            printf "\n  %-20s %dh %02dm\n", "TOTAL", int(grand/60), grand%60
+        }
+    ' "$LOG"
+
+    echo ""
+
+    # Daily breakdown
+    echo -e "${BOLD}Daily Breakdown:${RESET}"
+    awk -F',' -v since="$since" '
+        NR > 1 && $1 >= since {
+            day[$1] += $5
+        }
+        END {
+            n = asorti(day, sorted)
+            for (i = 1; i <= n; i++) {
+                d = sorted[i]
+                h = int(day[d] / 60)
+                m = day[d] % 60
+                printf "  %s  %dh %02dm\n", d, h, m
+            }
+        }
+    ' "$LOG"
+}
+
+# ── Waybar Output ──
+
+do_waybar() {
+    if ! is_tracking; then
+        echo '{}'
+        return
+    fi
+
+    local data
+    data=$(cat "$CURRENT")
+    local project="${data%%|*}"
+    local start_ts="${data##*|}"
+    local now
+    now=$(date '+%s')
+    local elapsed=$(( (now - start_ts) / 60 ))
+    local hours=$((elapsed / 60))
+    local mins=$((elapsed % 60))
+
+    local display
+    if [ "$hours" -gt 0 ]; then
+        display="${hours}h${mins}m"
+    else
+        display="${mins}m"
+    fi
+
+    printf '{"text": " %s", "tooltip": "%s — %s", "class": "tracking"}\n' "$display" "$project" "$display"
+}
+
+# ── TUI ──
+
+show_tui() {
+    clear
+    echo -e "${GOLD}${BOLD}"
+    figlet -f small "Timetrack" 2>/dev/null || echo "═══ HOLY TIMETRACK ═══"
+    echo -e "${RESET}${DIM}Work hour logger${RESET}\n"
+
+    do_status
+    echo ""
+
+    if is_tracking; then
+        CHOICE=$(gum choose \
+            "⏹️  Stop Tracking" \
+            "📊 Report (this week)" \
+            "📊 Report (today)" \
+            "📊 Report (this month)" \
+            "← Back")
+    else
+        CHOICE=$(gum choose \
+            "▶️  Start Tracking" \
+            "📊 Report (this week)" \
+            "📊 Report (today)" \
+            "📊 Report (this month)" \
+            "← Back")
+    fi
+
+    case "$CHOICE" in
+        *"Start"*)       do_start ;;
+        *"Stop"*)        do_stop ;;
+        *"this week"*)   do_report week ;;
+        *"today"*)       do_report today ;;
+        *"this month"*)  do_report month ;;
+        *) return ;;
+    esac
+
+    echo ""
+    gum input --placeholder "Press Enter to continue..."
+}
+
+# ── Main ──
+
+case "${1:-}" in
+    start)  do_start "${2:-}" ;;
+    stop)   do_stop ;;
+    status) do_status ;;
+    report) do_report "${2:-week}" ;;
+    waybar) do_waybar ;;
+    *)      show_tui ;;
+esac
