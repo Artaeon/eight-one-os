@@ -438,67 +438,18 @@ step_confirm_and_install() {
 generate_config() {
     gum style --foreground "$GOLD" --bold --margin "1 7" "Generating configuration..."
 
-    # ── Disk layout JSON ──
-    local encryption_block=""
+    local encryption_block="null"
     if [[ "$INSTALL_LUKS" == "true" ]]; then
         encryption_block=$(cat <<ENCEOF
-    "encryption": {
-        "encryption_type": "luks",
-        "encryption_password": "$INSTALL_LUKS_PASS"
-    },
+        {
+            "encryption_type": "luks",
+            "encryption_password": "$INSTALL_LUKS_PASS",
+            "partitions": ["root-partition-id"],
+            "lvm_volumes": []
+        }
 ENCEOF
 )
     fi
-
-    cat > "$DISK_LAYOUT_FILE" <<DISKEOF
-{
-    "$INSTALL_DRIVE_PATH": {
-        "partitions": [
-            {
-                "boot": true,
-                "encrypted": false,
-                "filesystem": {
-                    "format": "fat32",
-                    "mount_options": []
-                },
-                "mountpoint": "/boot",
-                "size": {
-                    "sector_size": null,
-                    "unit": "MiB",
-                    "value": 512
-                },
-                "type": "primary",
-                "flags": ["Boot"],
-                "wipe": true
-            },
-            {
-    $encryption_block
-                "encrypted": $([ "$INSTALL_LUKS" = "true" ] && echo "true" || echo "false"),
-                "filesystem": {
-                    "format": "btrfs",
-                    "mount_options": ["compress=zstd", "noatime"]
-                },
-                "btrfs": [
-                    {"mountpoint": "/", "name": "@"},
-                    {"mountpoint": "/home", "name": "@home"},
-                    {"mountpoint": "/var/log", "name": "@log"},
-                    {"mountpoint": "/var/cache/pacman/pkg", "name": "@pkg"},
-                    {"mountpoint": "/.snapshots", "name": "@snapshots"}
-                ],
-                "mountpoint": null,
-                "size": {
-                    "sector_size": null,
-                    "unit": "Remainder",
-                    "value": 0
-                },
-                "type": "primary",
-                "wipe": true
-            }
-        ],
-        "wipe": true
-    }
-}
-DISKEOF
 
     # ── Credentials JSON ──
     cat > "$CREDS_FILE" <<CREDEOF
@@ -521,11 +472,49 @@ CREDEOF
         "audio": "pipewire"
     },
     "bootloader": "Grub",
-    "config_version": "2.6.4",
+    "config_version": "2.8.2",
     "debug": false,
     "disk_config": {
-        "config_type": "default_layout",
-        "device_modifications": []
+        "config_type": "custom_layout",
+        "device_modifications": [
+            {
+                "device": "$INSTALL_DRIVE_PATH",
+                "partitions": [
+                    {
+                        "obj_id": "boot-partition-id",
+                        "btrfs": [],
+                        "flags": ["boot"],
+                        "fs_type": "fat32",
+                        "size": {"sector_size": {"unit": "B", "value": 512}, "unit": "MiB", "value": 512},
+                        "mount_options": [],
+                        "mountpoint": "/boot",
+                        "start": {"sector_size": {"unit": "B", "value": 512}, "unit": "MiB", "value": 1},
+                        "status": "create",
+                        "type": "primary"
+                    },
+                    {
+                        "obj_id": "root-partition-id",
+                        "btrfs": [
+                            {"mountpoint": "/", "name": "@"},
+                            {"mountpoint": "/home", "name": "@home"},
+                            {"mountpoint": "/var/log", "name": "@log"},
+                            {"mountpoint": "/var/cache/pacman/pkg", "name": "@pkg"},
+                            {"mountpoint": "/.snapshots", "name": "@snapshots"}
+                        ],
+                        "flags": [],
+                        "fs_type": "btrfs",
+                        "size": {"sector_size": {"unit": "B", "value": 512}, "unit": "Percent", "value": 100},
+                        "mount_options": ["compress=zstd", "noatime"],
+                        "mountpoint": null,
+                        "start": {"sector_size": {"unit": "B", "value": 512}, "unit": "MiB", "value": 513},
+                        "status": "create",
+                        "type": "primary"
+                    }
+                ],
+                "wipe": true
+            }
+        ],
+        "disk_encryption": $encryption_block
     },
     "hostname": "$INSTALL_HOSTNAME",
     "kernels": ["linux"],
@@ -548,7 +537,7 @@ CREDEOF
     "profile_config": null,
     "swap": true,
     "timezone": "$INSTALL_TIMEZONE",
-    "version": "2.6.4"
+    "version": "2.8.2"
 }
 CONFEOF
 
@@ -578,7 +567,6 @@ run_install() {
     if archinstall \
         --config "$CONFIG_FILE" \
         --creds "$CREDS_FILE" \
-        --disk_layouts "$DISK_LAYOUT_FILE" \
         --silent 2>&1 | tee /tmp/eightone_install.log; then
 
         # ── Post-install: Copy skel, enable services, configure GRUB ──
