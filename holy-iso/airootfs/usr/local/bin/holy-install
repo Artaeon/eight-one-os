@@ -473,7 +473,7 @@ CREDEOF
     "desktop-environment": "hyprland",
     "config_version": "2.8.2",
     "disk_config": {
-        "config_type": "default",
+        "config_type": "default_layout",
         "device_modifications": [
             {
                 "device": "$INSTALL_DRIVE_PATH",
